@@ -30,7 +30,7 @@ def inference_dla():
     img_bin_path = pwd + '/' + img_bin;
     print(dla_model_path)
     print(img_bin_path)
-    out = sp.getoutput("cd /usr/lib64/;./runtime_api_sample %s %s" % (dla_model_path, img_bin_path))
+    out = sp.getoutput("runtime_api_sample %s %s" % (dla_model_path, img_bin_path))
     print("stdout::: ", out)
     
     # parse output, find top index
