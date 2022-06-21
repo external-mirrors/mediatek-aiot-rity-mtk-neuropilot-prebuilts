@@ -6,10 +6,11 @@ Repo:  aiot_int/bsp/neuron-pilot-dev
 
 Branch: mt8195
 
-Commit: 33867bbbc63fb7c64f2ddb42b043026807cc6c76
+Commit: b64a4636499bc7161ace4c5227aef6d9011138f8
 
 Changes:
 
+- Fix issue about benchmark does not run when user specifies model and target
 - For runtime_api_sample and neuronrt: correct searching path of libneuron_runtime.so, avoid print confusing error message, such as 'Failed to open libneuron_runtime.5.so'
 
 | Binary                     | Commit                                   | Branch                     | Module |
