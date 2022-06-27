@@ -22,28 +22,6 @@ def tflite_2_dla(tflite_model, target, dla_model):
     result = os.popen(batcmd).read()
     logging.debug(result)
         
-def find_input_output_info_from_dla(dla_model, in_size, out_count):
-    # find input size of model    
-    batcmd = ('neuronrt -a %s -d' % dla_model)
-    result = os.popen(batcmd).read()
-    match = re.search('Handle = 0, <(\d+) x (\d+) x (\d+) x (\d+)>', result)
-    if match:
-        in_size = ( int(match.group(1)), int(match.group(2)), int(match.group(3)), int(match.group(4)) )
-        return 1
-    else:
-        logging.error("FAIL to find input size of model")
-        return 0
-        
-    # find output counts of model
-    tmp = result.partition("Output")[2]
-    match = re.findall('Handle = ', tmp)
-    if match:
-        out_count = len(match)
-        return 1
-    else:
-        logging.error("FAIL to find output scountize of model")
-        return 0
-
 def benchmark_tflite_model_auto(model):
     tflite_target_list = [ ['mdla2.0', '', CLEAR_DIRTY], ['vpu', '', CLEAR_DIRTY] ]
 
@@ -55,6 +33,7 @@ def benchmark_tflite_model_auto(model):
         
         result = ''
         
+        print("\n[Inference Model:%s on Target:%s]" % (model, target))
         print("------------Compile model----------------------")
         dla = model.replace('.tflite', '.dla')
         tflite_2_dla(model, target, dla)
@@ -68,24 +47,26 @@ def benchmark_tflite_model_auto(model):
         # find input size and output count of model 
         intput_size = (-1,-1,-1,-1)
         output_count = 0
-        batcmd = ('neuronrt -a %s -d' % dla)
+        batcmd = ('ncc-tflite --show-io-info %s' % model )
         result = os.popen(batcmd).read()
-        match = re.search('Handle = 0, <(\d+) x (\d+) x (\d+) x (\d+)>', result)
+        logging.debug(result)
+
+        match = re.search('of output tensors: (\d+)', result)
         if match:
-            print("^^^^^^ Ignore above error msg because this step queries input/output info from model, not inference model ")
+            output_count = int(match.group(1))
+        else:
+            logging.error("FAIL to find output count of model")
+            continue
+
+        tmp = result.partition("# of output tensors")[0]
+        match = re.search('Shape: {(\d+),(\d+),(\d+),(\d+)}', tmp)
+        if match:
             intput_size = ( int(match.group(1)), int(match.group(2)), int(match.group(3)), int(match.group(4)) )
         else:
             logging.error("FAIL to find input size of model")
             continue
-
-        # find output counts of model
-        tmp = result.partition("Output")[2]
-        match = re.findall('Handle = ', tmp)
-        if match:
-            output_count = len(match)
-        else:
-            logging.error("FAIL to find output scountize of model")
-            continue
+        
+        result = ''
         
         print("------------Gen input.bin----------------------")
         # gen rand input.bin
@@ -116,18 +97,19 @@ def benchmark_tflite_model_auto(model):
 
         os.remove(dla)
         
-    print("------------Summary----------------------------")
+    print("------------Summary--------------------------------")    
     # print model inference time by each target
     for element in tflite_target_list:
         if (element[2] == DIRTY):
             logging.info(element[1])
-    print("-----------------------------------------------")
+    print("---------------------------------------------------")     
 
 
 
 def benchmark_tflite_model(model):    
     result = ''
         
+    print("\n[Inference Model:%s on Target:%s]" % (model, user_specific_target)) 
     print("------------Compile model----------------------")
     dla = model.replace('.tflite', '.dla')
     tflite_2_dla(model, user_specific_target, dla)
@@ -138,27 +120,30 @@ def benchmark_tflite_model(model):
     result = ''
         
     print("------------Find input/output info-------------")
-    # find input size and output count of model
+    # find input size and output count of model 
     intput_size = (-1,-1,-1,-1)
     output_count = 0
-    batcmd = ('neuronrt -a %s -d' % dla)
+    batcmd = ('ncc-tflite --show-io-info %s' % model )
     result = os.popen(batcmd).read()
-    match = re.search('Handle = 0, <(\d+) x (\d+) x (\d+) x (\d+)>', result)
+    logging.debug(result)
+    
+    match = re.search('of output tensors: (\d+)', result)
     if match:
-        print("^^^^^^ Ignore above error msg because this step queries input/output info from model, not inference model ")
+        output_count = int(match.group(1))
+    else:
+        logging.error("FAIL to find output count of model")
+        return
+
+    tmp = result.partition("# of output tensors")[0]
+    match = re.search('Shape: {(\d+),(\d+),(\d+),(\d+)}', tmp)
+    if match:
         intput_size = ( int(match.group(1)), int(match.group(2)), int(match.group(3)), int(match.group(4)) )
     else:
         logging.error("FAIL to find input size of model")
         return
-
-    # find output counts of model
-    tmp = result.partition("Output")[2]
-    match = re.findall('Handle = ', tmp)
-    if match:
-        output_count = len(match)
-    else:
-        logging.error("FAIL to find output scountize of model")
-        return
+        
+    result = ''
+    
         
     print("------------Gen input.bin----------------------")
     # gen rand input.bin
@@ -189,15 +174,16 @@ def benchmark_tflite_model(model):
         logging.error("FAIL to find avg inference time of model")
         return
 
-    print("------------Summary----------------------------")
+    print("------------Summary--------------------------------")    
     logging.info('%s, %s, avg inference time: %s' % (model, user_specific_target, avg_time))
-    print("-----------------------------------------------")
+    print("---------------------------------------------------")    
 
 
 
 
 def benchmark_dla_model(model):
 
+    print("\n[Inference Model:%s]" % model)
     print("------------Find input/output info-------------")
     # find input size and output count of model
     intput_size = (-1,-1,-1,-1)
@@ -249,9 +235,9 @@ def benchmark_dla_model(model):
         logging.error("FAIL to find avg inference time of model")
         return
 
-    print("------------Summary----------------------------")
+    print("------------Summary--------------------------------")    
     logging.info('%s, avg inference time: %s' % (model, avg_time))
-    print("-----------------------------------------------")
+    print("---------------------------------------------------") 
         
 
 if __name__ == "__main__":
@@ -302,6 +288,3 @@ if __name__ == "__main__":
                     benchmark_dla_model(user_specific_model)
             else:
                 logging.error('model: %s not exist', user_specific_model)
-            
-        
-    
