@@ -1,5 +1,37 @@
 # Release Note
 
+## 2022/10/19
+
+Repo:  aiot_int/bsp/neuron-pilot-dev
+
+Branch: mt8195
+
+Commit: a1148264129aa0617cf5defe11be05ebcd4cbc40
+
+Changes:
+
+- Install Neuron SDK headers to /usr/include/neuron/api/
+
+- Refine /usr/share/benchmark_dla/benchmark.py
+
+  - Use argparse to write user friendly command line interfaces, such as:
+
+    ```
+    options:
+      -h, --help
+      --auto
+      --stress
+      --file FILE
+      --target {mdla2.0,vpu,tflite_cpu}
+      --dla DLA
+      --count COUNT
+      --quit
+    ```
+
+    Find detailed description of each option by cmd: `python3 benchmark.py -h`
+
+
+
 ## 2022/06/23
 
 Repo:  aiot_int/bsp/neuron-pilot-dev

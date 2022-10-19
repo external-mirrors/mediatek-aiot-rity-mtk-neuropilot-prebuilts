@@ -10,7 +10,9 @@ all:
 
 install:
 	install -d $(INCLUDEDIR)
-	install ${PWD}/usr/include/*.h $(INCLUDEDIR)
+	install -d $(INCLUDEDIR)/neuron
+	install -d $(INCLUDEDIR)/neuron/api
+	install ${PWD}/usr/include/neuron/api/*.h $(INCLUDEDIR)/neuron/api
 
 	install -d $(LIBDIR)
 	cp -a $(PWD)/usr/lib64/*.so* $(LIBDIR)
