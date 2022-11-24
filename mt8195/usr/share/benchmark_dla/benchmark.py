@@ -4,6 +4,7 @@ import sys
 import re
 import numpy as np
 import logging
+import subprocess
 
 available_backends = ['mdla2.0', 'vpu', 'tflite_cpu']
 
@@ -13,9 +14,6 @@ CLEAR_DIRTY = 0
 TIME = 'avg inference time:'
 INIT_TIME = TIME + ' FAILED'
 
-def PRINT_LOG(msg, enable):
-    if enable:
-        print(msg)
 
 def tflite_2_dla(tflite_model, target, dla_model):
     # compile for specific target
@@ -23,39 +21,33 @@ def tflite_2_dla(tflite_model, target, dla_model):
         return
 
     batcmd = ('ncc-tflite -arch %s %s -o %s' % (target, tflite_model, dla_model) )
-    result = os.popen(batcmd).read()
+    res = subprocess.run(batcmd, shell=True, check=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    result = res.stdout
     logging.debug(result)
 
-def benchmark_tflite_model_auto(model, count=100, verbose=False, cache_dla=False):
+def benchmark_tflite_model_auto(model, count=100, cache_dla=False, profile=False):
     tflite_target_list = [ ['mdla2.0', '', CLEAR_DIRTY], ['vpu', '', CLEAR_DIRTY] ]
 
     for element in tflite_target_list:
+        result = ''
+
         target = element[0];
 
         element[1] = '%s, %s, %s' % (model, target, INIT_TIME)
         element[2] = CLEAR_DIRTY
 
-        result = ''
-
-        PRINT_LOG("\n[Inference Model:%s on Target:%s, %d times]" % (model, target, count), verbose)
-        PRINT_LOG("\n------------Compile model----------------------", verbose)
-        
         dla = model.replace('.tflite', "-"+ target + '.dla')
         tflite_2_dla(model, target, dla)
         if not os.path.exists(dla):
             logging.error("FAIL to convert model to dla with target %s, %s" % (target, model))
             continue
 
-        result = ''
-
-
-        PRINT_LOG("\n------------Find input/output info-------------", verbose)
-            
         # find input size and output count of model
         intput_size = (-1,-1,-1,-1)
         output_count = 0
         batcmd = ('ncc-tflite --show-io-info %s' % model )
-        result = os.popen(batcmd).read()
+        res = subprocess.run(batcmd, shell=True, check=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+        result = res.stdout
         logging.debug(result)
 
         match = re.search('of output tensors: (\d+)', result)
@@ -75,27 +67,27 @@ def benchmark_tflite_model_auto(model, count=100, verbose=False, cache_dla=False
 
         result = ''
 
-
-        PRINT_LOG("\n------------Gen input.bin----------------------", verbose)
-
         # gen rand input.bin
         intput_bin = 'input.bin'
         ndarray = np.random.randint(0, high=255, size=intput_size, dtype=np.uint8)
         ndarray.tofile(intput_bin)
-
-
-        PRINT_LOG("\n------------Inference--------------------------", verbose)
 
         # inference
         batcmd = 'neuronrt -m hw -a %s -c %s -b 100 -i %s ' % (dla, count, intput_bin)
         for i in range(output_count):
             batcmd = batcmd + (' -o output_%s.bin ' % i)
 
-        result = os.popen(batcmd).read()
+        if profile is True:
+            logging.info("%s, %s, inference start" % (model, target))
+
+        res = subprocess.run(batcmd, shell=True, check=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+
+        if profile is True:
+            logging.info("%s, %s, inference stop" % (model, target))
+            print(res.stdout)
+            
+        result = res.stdout
         logging.debug(result)
-
-
-        PRINT_LOG("\n------------Avg inference time-----------------", verbose)
 
         # find 'Total inference time' in output log
         match = re.search('Total inference time = (\d+)', result)
@@ -105,24 +97,15 @@ def benchmark_tflite_model_auto(model, count=100, verbose=False, cache_dla=False
             avg_time = time / count
             element[1] = '%s, %s, %s %s' % (model, target, TIME, avg_time)
             element[2] = DIRTY;
+            logging.info(element[1])
 
         if not cache_dla:
             os.remove(dla)
 
-    PRINT_LOG("\n------------Summary----------------------------", verbose)
-
-    # print model inference time by each target
-    for element in tflite_target_list:
-        if (element[2] == DIRTY):
-            logging.info(element[1])
 
 
-
-def benchmark_tflite_model(model, target="mdla2.0", count=100, verbose=False, cache_dla=False):
+def benchmark_tflite_model(model, target="mdla2.0", count=100, cache_dla=False, profile=False):
     result = ''
-
-    PRINT_LOG("\n[Inference Model:%s on Target:%s, %d times]" % (model, target, count), verbose)
-    PRINT_LOG("\n------------Compile model----------------------", verbose)
 
     dla = model.replace('.tflite', "-"+ target + '.dla')
     tflite_2_dla(model, target, dla)
@@ -132,14 +115,13 @@ def benchmark_tflite_model(model, target="mdla2.0", count=100, verbose=False, ca
 
     result = ''
 
-
-    PRINT_LOG("\n------------Find input/output info-------------", verbose)
-
     # find input size and output count of model
     intput_size = (-1,-1,-1,-1)
     output_count = 0
     batcmd = ('ncc-tflite --show-io-info %s' % model )
-    result = os.popen(batcmd).read()
+    res = subprocess.run(batcmd, shell=True, check=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    result = res.stdout
+    
     logging.debug(result)
 
     match = re.search('of output tensors: (\d+)', result)
@@ -159,30 +141,30 @@ def benchmark_tflite_model(model, target="mdla2.0", count=100, verbose=False, ca
 
     result = ''
 
-    PRINT_LOG("\n------------Gen input.bin----------------------", verbose)
-
     # gen rand input.bin
     intput_bin = 'input.bin'
     ndarray = np.random.randint(0, high=255, size=intput_size, dtype=np.uint8)
     ndarray.tofile(intput_bin)
-
-
-
-    PRINT_LOG("\n------------Inference--------------------------", verbose)
 
     # inference
     batcmd = 'neuronrt -m hw -a %s -c %s -b 100 -i %s ' % (dla, count, intput_bin)
     for i in range(output_count):
         batcmd = batcmd + (' -o output_%s.bin ' % i)
 
-    result = os.popen(batcmd).read()
+    if profile is True:
+        logging.info("%s, %s, inference start" % (model, target))
+
+    res = subprocess.run(batcmd, shell=True, check=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+
+    if profile is True:
+        logging.info("%s, %s, inference stop" % (model, target))
+        print(res.stdout)
+
+    result = res.stdout     
     logging.debug(result)
 
     if not cache_dla:
         os.remove(dla)
-
-
-    PRINT_LOG("\n------------Avg inference time-----------------", verbose)
 
     # find 'Total inference time' in output log
     match = re.search('Total inference time = (\d+)', result)
@@ -194,26 +176,28 @@ def benchmark_tflite_model(model, target="mdla2.0", count=100, verbose=False, ca
         logging.error("FAIL to find avg inference time of model")
         return
 
-
-    PRINT_LOG("\n------------Summary----------------------------", verbose)
-
     logging.info('%s, %s, avg inference time: %s' % (model, target, avg_time))
 
 
 
-def benchmark_dla_model(model, count=100, verbose=False):
-
-    PRINT_LOG("\n[Inference Model:%s, %d times]" % (model, count), verbose)
-    PRINT_LOG("\n------------Find input/output info-------------", verbose)
+def benchmark_dla_model(model, count=100, profile=False):
+    result = ''
 
     # find input size and output count of model
     intput_size = (-1,-1,-1,-1)
     output_count = 0
+
+    os.environ["MTKNN_ENABLE_PROFILER"] = "0"
+
     batcmd = ('neuronrt -a %s -d' % model)
     result = os.popen(batcmd).read()
+
+    if profile is True:
+        os.environ["MTKNN_ENABLE_PROFILER"] = "1"
+
+
     match = re.search('Handle = 0, <(\d+) x (\d+) x (\d+) x (\d+)>', result)
     if match:
-        PRINT_LOG("\n^^^^^^ Ignore above error msg because this step queries input/output info from model, not inference model ", True)
         intput_size = ( int(match.group(1)), int(match.group(2)), int(match.group(3)), int(match.group(4)) )
     else:
         logging.error("FAIL to find input size of model")
@@ -228,28 +212,29 @@ def benchmark_dla_model(model, count=100, verbose=False):
         logging.error("FAIL to find output scountize of model")
         return
 
-
-    PRINT_LOG("\n------------Gen input.bin----------------------", verbose)
+    result = ''
 
     # gen rand input.bin
     intput_bin = 'input.bin'
     ndarray = np.random.randint(0, high=255, size=intput_size, dtype=np.uint8)
     ndarray.tofile(intput_bin)
 
-
-
-    PRINT_LOG("\n------------Inference--------------------------", verbose)
-
     # inference
     batcmd = 'neuronrt -m hw -a %s -c %s -b 100 -i %s ' % (model, count, intput_bin)
     for i in range(output_count):
         batcmd = batcmd + (' -o output_%s.bin ' % i)
 
-    result = os.popen(batcmd).read()
+    if profile is True:
+        logging.info("%s, inference start" % model)
+
+    res = subprocess.run(batcmd, shell=True, check=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+
+    if profile is True:
+        logging.info("%s, inference stop" % model)
+        print(res.stdout)
+
+    result = res.stdout
     logging.debug(result)
-
-
-    PRINT_LOG("\n------------Avg inference time-----------------", verbose)
 
     # find 'Total inference time' in output log
     match = re.search('Total inference time = (\d+)', result)
@@ -260,9 +245,6 @@ def benchmark_dla_model(model, count=100, verbose=False):
     else:
         logging.error("FAIL to find avg inference time of model")
         return
-
-
-    PRINT_LOG("\n------------Summary--------------------------------", verbose)
 
     logging.info('%s, avg inference time: %s' % (model, avg_time))
 
@@ -275,12 +257,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
         '--auto',
 		action='store_true',
-		help='Auto run, find all models in current folder and inference them one by one. It will ignore options: --file, --dla and --target')
+		help='Auto run, find all models in current folder and inference them one by one. It will delete dla file after inference and it will ignore options: --file and --target')
 
 parser.add_argument(
         '--stress',
 		action='store_true',
-		help='Stress test, find all models in current folder and inference them one by one. It will ignore options: --auto, --file, --dla and --target')
+		help='Stress test, find all models in current folder and inference them one by one. It will not delete dla file after inference and it will ignore options: --auto, --file and --target')
 
 parser.add_argument(
         '--file',
@@ -294,20 +276,15 @@ parser.add_argument(
 		help='Choose a backends to inference. Default: mdla2.0')
 
 parser.add_argument(
-        '--dla',
-		default=None,
-		help='Input a dla file to inference. It will ignore option: --target')
-
-parser.add_argument(
         '--count',
         default=100,
 		type=int,
 		help='How many times of inference. Default: 100')
 
 parser.add_argument(
-        '--quit',
+        '--profile',
 		action='store_true',
-		help='print a summary only on inference complete')
+		help='print profile information')        
 
 args = parser.parse_args()
 
@@ -327,24 +304,26 @@ if args.stress is False:
     logging.getLogger('').addHandler(sh)
     logging.getLogger('').addHandler(fh)
 
-verbose = not args.quit
+if args.profile is True:
+    os.environ["MTKNN_ENABLE_PROFILER"] = "1"
+else:
+    os.environ["MTKNN_ENABLE_PROFILER"] = "0"
 
 if args.auto is True or args.stress is True:
     cache_dla = False
     if args.stress is True:
         cache_dla = True
-        verbose = False
-        
+
     # auto run, find all models in current folder and inference them one by one
     for file in os.listdir(pwd):
         if file.endswith('.tflite'):
-            benchmark_tflite_model_auto(file, args.count, verbose, cache_dla)
+            benchmark_tflite_model_auto(file, args.count, cache_dla, args.profile)
 
 else:
     if os.path.exists(args.file):
         if args.file.endswith('.tflite'):
-            benchmark_tflite_model(args.file, args.target, args.count, verbose, False)
+            benchmark_tflite_model(args.file, args.target, args.count, False, args.profile)
         elif args.file.endswith('.dla'):
-            benchmark_dla_model(args.file, args.count, verbose)
+            benchmark_dla_model(args.file, args.count, args.profile)
     else:
         logging.error('Error to load model %s', args.file)

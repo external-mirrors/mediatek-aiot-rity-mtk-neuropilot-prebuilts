@@ -1,5 +1,52 @@
 # Release Note
 
+## 2022/11/24
+
+Repo:  aiot_int/bsp/neuron-pilot-dev
+
+Branch: mt8195
+
+Commit:  6fb38d868a5f26cc59bd46a06c57d9ab2cfa3237
+
+Changes:
+
+- Update benchmark.py, enable profile option
+
+  -  Add profile option: `--profile` to print profile information after model inference.
+
+  - Example
+
+    - ```
+      $ python3 benchmark.py --stress --profile --count 2
+      2022-04-28 23:58:55,812 [INFO] ssd_mobilenet_v1_coco_quantized.tflite, mdla2.0, inference start
+      INFO: ----------------------------------------------------------------------------------------------------
+      INFO:                                  Runtime Status (LEVEL 1) - Summary
+      INFO: ----------------------------------------------------------------------------------------------------
+      INFO:   Total Execution Time: 46.73193359375 ms over 2 times inference.
+      INFO:  ====Time===, ==Ratio==, =ExeTimes=, =Time/Inf.=, ===Description===
+      INFO:       10.218,     21.9%,          1, -----------, Read Compiled Network
+      INFO:        1.106,      2.4%,          1, -----------, Extract Compiled Network
+      INFO:        3.830,      8.2%,          2, -----------, Map Device Memory
+      INFO:        3.310,      7.1%,          2, -----------, Fill Constant Data
+      INFO:        0.022,      0.0%,          2, -----------, Deserialize DLA Sections
+      INFO:        0.002,      0.0%,          2, -----------, Process target-specific data
+      INFO:        0.116,      0.2%,          2,       0.058, Set Inference Input
+      INFO:        0.427,      0.9%,         24,       0.213, Set Inference Output
+      INFO:       27.702,     59.3%,          2,      13.851, Inference
+      INFO:       46.732,    100.0%,          2,      14.122, Total
+      INFO: ----------------------------------------------------------------------------------------------
+      INFO:                                 Runtime Status (LEVEL 1) - Breakdown
+      INFO: ----------------------------------------------------------------------------------------------
+      INFO:   Inference: avg Time/inf.: 13.850830078125 ms over 2 times inference.
+      INFO:  ====Time===, ==GraphIdx==, ==ExeIdx==, ===Description===
+      INFO:       24.964,          ---,         #0, Inference
+      INFO:        2.738,          ---,         #1, Inference
+      INFO:  ----------------------------------------------------------------------------------------------
+      INFO: ...
+      ```
+  
+- Remove unused option: `--dla`, `--quit`
+
 ## 2022/10/19
 
 Repo:  aiot_int/bsp/neuron-pilot-dev
