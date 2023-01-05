@@ -6,7 +6,7 @@ Repo:  aiot_int/bsp/neuron-pilot-dev
 
 Branch: mt8195
 
-Commit:  TODO
+Commit:   18dbf3228259a4fae8b1412236d7e69e4f2905c7 
 
 Changes:
 
