@@ -1,5 +1,29 @@
 # Release Note
 
+## 2023/01/05
+
+Repo:  aiot_int/bsp/neuron-pilot-dev
+
+Branch: mt8195
+
+Commit:  TODO
+
+Changes:
+
+- Upgrade neuron/ncc-tflite from 5.1.1 to 5.8.3
+
+| Binary                     | Commit                                   | Branch                     | Module |
+| -------------------------- | ---------------------------------------- | -------------------------- | ------ |
+| libapu_mdw.so.2.0.0        | 7079fc5414795ea1b6ec54fef5658a4f618ba772 | alps-mp-r0.mp6.tc33sp.ppr2 |        |
+| libapu_mdw_batch.so.2.0.0  | 7079fc5414795ea1b6ec54fef5658a4f618ba772 | alps-mp-r0.mp6.tc33sp.ppr2 |        |
+| libedma.so.3.0.0           | 7079fc5414795ea1b6ec54fef5658a4f618ba772 | alps-mp-r0.mp6.tc33sp.ppr2 |        |
+| libmdla_ut.s0.2.0.0        | 82ffbd65a4c209684bfae76df8a1823a2fb27b2d | alps-mp-r0.mp6.tc33sp.ppr2 |        |
+| libneuron_runtime.so.5.8.3 | 1dad43edb9824eb4ff04e667f2cdbceff75c646b | NP5_0                      |        |
+| libvpu5.so.5.0.0           | 53f8320d404cb66e55dedc5709b095b3bbb93fed | alps-mp-r0.mp6.tc33sp.ppr2 |        |
+| libneuron_platform.vpu.so  | 1dad43edb9824eb4ff04e667f2cdbceff75c646b | NP5_0                      |        |
+| ncc-tflite                 | 21ff854ca7b1ed6754739cb2c2d551468db76e62 | NP5_0                      |        |
+| neuronrt                   | 1dad43edb9824eb4ff04e667f2cdbceff75c646b | NP5_0                      |        |
+
 ## 2022/11/24
 
 Repo:  aiot_int/bsp/neuron-pilot-dev

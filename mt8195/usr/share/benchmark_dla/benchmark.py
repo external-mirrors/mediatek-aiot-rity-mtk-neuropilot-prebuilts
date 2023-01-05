@@ -14,18 +14,111 @@ CLEAR_DIRTY = 0
 TIME = 'avg inference time:'
 INIT_TIME = TIME + ' FAILED'
 
+class ModelIO:
+    def __init__(self):
+        self.intput_size = (-1,-1,-1,-1)
+        self.intput_type = 'unknown'
+        self.output_count = 0
+        self.recommand_compile_options = ''
 
-def tflite_2_dla(tflite_model, target, dla_model):
+def query_tflite_model_io_info(model):
+    # find input size and output count of tflite model
+    ret = ModelIO()
+
+    intput_size = (-1,-1,-1,-1)
+    intput_type = 'kTfLiteUInt8'
+    output_count = 0
+    batcmd = ('ncc-tflite --show-io-info %s' % model )
+    res = subprocess.run(batcmd, shell=True, check=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    result = res.stdout
+    
+    logging.debug(result)
+
+    # find output count
+    match = re.search('of output tensors: (\d+)', result)
+    if match:
+        output_count = int(match.group(1))
+    else:
+        logging.error("FAIL to find output count of model")
+        return ret
+
+    ret.output_count = output_count
+
+    # find input size
+    tmp = result.partition("# of output tensors")[0]
+    match = re.search('Shape: {(\d+),(\d+),(\d+),(\d+)}', tmp)
+    if match:
+        intput_size = ( int(match.group(1)), int(match.group(2)), int(match.group(3)), int(match.group(4)) )
+    else:
+        logging.error("FAIL to find input size of model")
+        return ret
+
+    ret.intput_size = intput_size
+
+    # find input type
+    match = re.search('Type: (\w+)', tmp)
+    if match:
+        intput_type = (match.group(1))
+    else:
+        logging.error("FAIL to find input type of model")
+        return ret
+
+    ret.intput_type = intput_type
+    if intput_type == 'kTfLiteFloat32':
+        ret.recommand_compile_options = ' --relax-fp32 '
+
+    return ret
+
+def query_dla_model_io_info(model):
+    # find input size and output count of dla model
+    ret = ModelIO()
+
+    batcmd = ('neuronrt -a %s -d' % model)
+    result = os.popen(batcmd).read()
+
+	# find input size
+    match = re.search('Handle = 0, <(\d+) x (\d+) x (\d+) x (\d+)>', result)
+    if match:
+        intput_size = ( int(match.group(1)), int(match.group(2)), int(match.group(3)), int(match.group(4)) )
+    else:
+        logging.error("FAIL to find input size of model")
+        return
+
+    ret.intput_size = intput_size
+
+    # find output count
+    tmp = result.partition("Output")[2]
+    match = re.findall('Handle = ', tmp)
+    if match:
+        output_count = len(match)
+    else:
+        logging.error("FAIL to find output scountize of model")
+        return
+
+    ret.output_count = output_count
+
+    return ret
+
+
+def gen_input_bin(model_io, filename):
+    # generate input data, format can be uint8 or float32
+    ndarray = np.random.randint(0, high=255, size=model_io.intput_size, dtype=np.uint8)
+    if model_io.intput_type == 'kTfLiteFloat32':
+        ndarray = np.float32(ndarray)/255.0
+    ndarray.tofile(filename)
+
+
+def tflite_2_dla(tflite_model, target, dla_model, compile_options=""):
     # compile for specific target
     if os.path.exists(dla_model):
         return
 
-    batcmd = ('ncc-tflite -arch %s %s -o %s' % (target, tflite_model, dla_model) )
+    batcmd = ('ncc-tflite -arch %s %s -o %s %s' % (target, tflite_model, dla_model, compile_options) )
     res = subprocess.run(batcmd, shell=True, check=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
     result = res.stdout
     logging.debug(result)
 
-def benchmark_tflite_model_auto(model, count=100, cache_dla=False, profile=False):
+def benchmark_tflite_model_auto(model, count=100, compile_options="", cache_dla=False, profile=False):
     tflite_target_list = [ ['mdla2.0', '', CLEAR_DIRTY], ['vpu', '', CLEAR_DIRTY] ]
 
     for element in tflite_target_list:
@@ -37,44 +130,21 @@ def benchmark_tflite_model_auto(model, count=100, cache_dla=False, profile=False
         element[2] = CLEAR_DIRTY
 
         dla = model.replace('.tflite', "-"+ target + '.dla')
-        tflite_2_dla(model, target, dla)
+        tflite_2_dla(model, target, dla, compile_options)
         if not os.path.exists(dla):
             logging.error("FAIL to convert model to dla with target %s, %s" % (target, model))
             continue
 
         # find input size and output count of model
-        intput_size = (-1,-1,-1,-1)
-        output_count = 0
-        batcmd = ('ncc-tflite --show-io-info %s' % model )
-        res = subprocess.run(batcmd, shell=True, check=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
-        result = res.stdout
-        logging.debug(result)
-
-        match = re.search('of output tensors: (\d+)', result)
-        if match:
-            output_count = int(match.group(1))
-        else:
-            logging.error("FAIL to find output count of model")
-            continue
-
-        tmp = result.partition("# of output tensors")[0]
-        match = re.search('Shape: {(\d+),(\d+),(\d+),(\d+)}', tmp)
-        if match:
-            intput_size = ( int(match.group(1)), int(match.group(2)), int(match.group(3)), int(match.group(4)) )
-        else:
-            logging.error("FAIL to find input size of model")
-            continue
-
-        result = ''
+        modeil_io = query_tflite_model_io_info(model)
 
         # gen rand input.bin
-        intput_bin = 'input.bin'
-        ndarray = np.random.randint(0, high=255, size=intput_size, dtype=np.uint8)
-        ndarray.tofile(intput_bin)
+        input_bin = 'input.bin'
+        gen_input_bin(modeil_io, input_bin)
 
         # inference
-        batcmd = 'neuronrt -m hw -a %s -c %s -b 100 -i %s ' % (dla, count, intput_bin)
-        for i in range(output_count):
+        batcmd = 'neuronrt -m hw -a %s -c %s -b 100 -i %s ' % (dla, count, input_bin)
+        for i in range(modeil_io.output_count):
             batcmd = batcmd + (' -o output_%s.bin ' % i)
 
         if profile is True:
@@ -104,51 +174,24 @@ def benchmark_tflite_model_auto(model, count=100, cache_dla=False, profile=False
 
 
 
-def benchmark_tflite_model(model, target="mdla2.0", count=100, cache_dla=False, profile=False):
-    result = ''
+def benchmark_tflite_model(model, target="mdla2.0", count=100, compile_options="", cache_dla=False, profile=False):
 
     dla = model.replace('.tflite', "-"+ target + '.dla')
-    tflite_2_dla(model, target, dla)
+    tflite_2_dla(model, target, dla, compile_options)
     if not os.path.exists(dla):
         logging.error("FAIL to convert model to dla with target %s, %s" % (target, model))
         return
 
-    result = ''
-
     # find input size and output count of model
-    intput_size = (-1,-1,-1,-1)
-    output_count = 0
-    batcmd = ('ncc-tflite --show-io-info %s' % model )
-    res = subprocess.run(batcmd, shell=True, check=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
-    result = res.stdout
-    
-    logging.debug(result)
-
-    match = re.search('of output tensors: (\d+)', result)
-    if match:
-        output_count = int(match.group(1))
-    else:
-        logging.error("FAIL to find output count of model")
-        return
-
-    tmp = result.partition("# of output tensors")[0]
-    match = re.search('Shape: {(\d+),(\d+),(\d+),(\d+)}', tmp)
-    if match:
-        intput_size = ( int(match.group(1)), int(match.group(2)), int(match.group(3)), int(match.group(4)) )
-    else:
-        logging.error("FAIL to find input size of model")
-        return
-
-    result = ''
+    modeil_io = query_tflite_model_io_info(model)
 
     # gen rand input.bin
-    intput_bin = 'input.bin'
-    ndarray = np.random.randint(0, high=255, size=intput_size, dtype=np.uint8)
-    ndarray.tofile(intput_bin)
+    input_bin = 'input.bin'
+    gen_input_bin(modeil_io, input_bin)
 
-    # inference
-    batcmd = 'neuronrt -m hw -a %s -c %s -b 100 -i %s ' % (dla, count, intput_bin)
-    for i in range(output_count):
+
+    batcmd = 'neuronrt -m hw -a %s -c %s -b 100 -i %s ' % (dla, count, input_bin)
+    for i in range(modeil_io.output_count):
         batcmd = batcmd + (' -o output_%s.bin ' % i)
 
     if profile is True:
@@ -183,45 +226,21 @@ def benchmark_tflite_model(model, target="mdla2.0", count=100, cache_dla=False, 
 def benchmark_dla_model(model, count=100, profile=False):
     result = ''
 
-    # find input size and output count of model
-    intput_size = (-1,-1,-1,-1)
-    output_count = 0
-
     os.environ["MTKNN_ENABLE_PROFILER"] = "0"
 
-    batcmd = ('neuronrt -a %s -d' % model)
-    result = os.popen(batcmd).read()
+    # find input size and output count of model
+    modeil_io = query_dla_model_io_info(model)
 
     if profile is True:
         os.environ["MTKNN_ENABLE_PROFILER"] = "1"
 
-
-    match = re.search('Handle = 0, <(\d+) x (\d+) x (\d+) x (\d+)>', result)
-    if match:
-        intput_size = ( int(match.group(1)), int(match.group(2)), int(match.group(3)), int(match.group(4)) )
-    else:
-        logging.error("FAIL to find input size of model")
-        return
-
-    # find output counts of model
-    tmp = result.partition("Output")[2]
-    match = re.findall('Handle = ', tmp)
-    if match:
-        output_count = len(match)
-    else:
-        logging.error("FAIL to find output scountize of model")
-        return
-
-    result = ''
-
     # gen rand input.bin
-    intput_bin = 'input.bin'
-    ndarray = np.random.randint(0, high=255, size=intput_size, dtype=np.uint8)
-    ndarray.tofile(intput_bin)
+    input_bin = 'input.bin'
+    gen_input_bin(modeil_io, input_bin)
 
     # inference
-    batcmd = 'neuronrt -m hw -a %s -c %s -b 100 -i %s ' % (model, count, intput_bin)
-    for i in range(output_count):
+    batcmd = 'neuronrt -m hw -a %s -c %s -b 100 -i %s ' % (model, count, input_bin)
+    for i in range(modeil_io.output_count):
         batcmd = batcmd + (' -o output_%s.bin ' % i)
 
     if profile is True:
@@ -252,39 +271,45 @@ def benchmark_dla_model(model, count=100, profile=False):
 
 
 # argument parser
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 
 parser.add_argument(
         '--auto',
-		action='store_true',
-		help='Auto run, find all models in current folder and inference them one by one. It will delete dla file after inference and it will ignore options: --file and --target')
+        action='store_true',
+        help='Auto run, find all models in current folder and inference them one by one. It will delete dla file after inference and it will ignore options: --file and --target')
 
 parser.add_argument(
         '--stress',
-		action='store_true',
-		help='Stress test, find all models in current folder and inference them one by one. It will not delete dla file after inference and it will ignore options: --auto, --file and --target')
+        action='store_true',
+        help='Stress test, find all models in current folder and inference them one by one. It will not delete dla file after inference and it will ignore options: --auto, --file and --target')
 
 parser.add_argument(
         '--file',
-		default=None,
-		help='Input a tflite model to inference. it will be executed with option: --target')
+        default=None,
+        help='Input a tflite model to inference. it will be executed with option: --target')
 
 parser.add_argument(
         '--target',
         default="mdla2.0",
-		choices=available_backends,
-		help='Choose a backends to inference. Default: mdla2.0')
+        choices=available_backends,
+        help='Choose a backends to inference. Default: mdla2.0')
 
 parser.add_argument(
         '--count',
         default=100,
-		type=int,
-		help='How many times of inference. Default: 100')
+        type=int,
+        help='How many times of inference. Default: 100')
 
 parser.add_argument(
         '--profile',
-		action='store_true',
-		help='print profile information')        
+        action='store_true',
+        help='print profile information')
+
+parser.add_argument(
+        '--options',
+        default="",
+        help='Add additional ncc-tflite options. Please find options by \'ncc-tflite -h\'\n'
+             'Ex. --options=\'--relax-fp32\'')
 
 args = parser.parse_args()
 
@@ -317,12 +342,16 @@ if args.auto is True or args.stress is True:
     # auto run, find all models in current folder and inference them one by one
     for file in os.listdir(pwd):
         if file.endswith('.tflite'):
-            benchmark_tflite_model_auto(file, args.count, cache_dla, args.profile)
+            modeil_io = query_tflite_model_io_info(file)
+            compile_options = args.options + modeil_io.recommand_compile_options
+            benchmark_tflite_model_auto(file, args.count, compile_options, cache_dla, args.profile)
 
 else:
     if os.path.exists(args.file):
         if args.file.endswith('.tflite'):
-            benchmark_tflite_model(args.file, args.target, args.count, False, args.profile)
+            modeil_io = query_tflite_model_io_info(args.file)
+            compile_options = args.options + modeil_io.recommand_compile_options
+            benchmark_tflite_model(args.file, args.target, args.count, compile_options, False, args.profile)
         elif args.file.endswith('.dla'):
             benchmark_dla_model(args.file, args.count, args.profile)
     else:
