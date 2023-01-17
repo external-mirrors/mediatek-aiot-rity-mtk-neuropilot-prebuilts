@@ -3,14 +3,11 @@ LIBDIR ?= "/usr/lib64"
 SBINDIR ?= "/usr/sbin"
 DATADIR ?= "/usr/share"
 INCLUDEDIR ?= "/usr/include"
-ETCDIR ?= "/etc"
+MDW_VER ?= "android13"
+NP_VER ?= "6"
 PWD ?= ""
 LIBS=/usr/lib64/*
 
-ifndef HW_SETTINGS_INSTALL
-$(warning HW_SETTINGS_INSTALL is undefined, prefer no hw settings to be installed)
-HW_SETTINGS_INSTALL = 0
-endif
 
 all:
 
@@ -18,22 +15,19 @@ install:
 	install -d $(INCLUDEDIR)
 	install -d $(INCLUDEDIR)/neuron
 	install -d $(INCLUDEDIR)/neuron/api
-	install ${PWD}/usr/include/neuron/api/*.h $(INCLUDEDIR)/neuron/api
+	install ${PWD}/neuron/${NP_VER}/usr/include/neuron/api/*.h $(INCLUDEDIR)/neuron/api
 
 	install -d $(LIBDIR)
-	cp -a $(PWD)/usr/lib64/*.so* $(LIBDIR)
+	cp -a $(PWD)/neuron/${NP_VER}/usr/lib64/*.so* $(LIBDIR)
+	cp -a $(PWD)/mdw/${MDW_VER}/usr/lib64/*.so* $(LIBDIR)
 	
+
 	install -d $(SBINDIR)
-	install $(PWD)/usr/sbin/* $(SBINDIR)
+	install $(PWD)/neuron/${NP_VER}/usr/sbin/* $(SBINDIR)
+	install $(PWD)/mdw/${MDW_VER}/usr/sbin/* $(SBINDIR)
 
 	install -d $(DATADIR)
 	install -d $(DATADIR)/demo_dla
-	install $(PWD)/usr/share/demo_dla/* $(DATADIR)/demo_dla
+	install $(PWD)/sample/usr/share/demo_dla/* $(DATADIR)/demo_dla
 	install -d $(DATADIR)/benchmark_dla
-	install $(PWD)/usr/share/benchmark_dla/* $(DATADIR)/benchmark_dla
-
-ifeq ($(HW_SETTINGS_INSTALL), 1)
-	$(info Installs hw settings to $(ETCDIR))
-	install -d $(ETCDIR)
-	cp $(PWD)/etc/* $(ETCDIR)
-endif
+	install $(PWD)/sample/usr/share/benchmark_dla/* $(DATADIR)/benchmark_dla
