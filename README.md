@@ -14,8 +14,8 @@ In kernel space, prebuilt binaries works with the APUSYS to executing Neural Net
 
 ## Branch
 
-- The main branch is unused. 
-
-- For i1200 platform: use `mt8195` branch. It is still under development and subject to design changes.
+- main: The main branch is unused.
+- kirkstone: For G1200 and G700 platforms, neuropilot version 6. It is still under development and subject to design changes.
+- mt8195: For G1200 platform, neuropilot version 5. It is still under development and subject to design changes.
 
 
