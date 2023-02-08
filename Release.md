@@ -1,5 +1,13 @@
 # Release Note
 
+## 2023/02/08
+
+Commit:  44fe607495911c4617252d9da39b9d221788aeb1 
+
+Changes: 
+
+- Update demo and benchmark scripts
+
 ## 2023/02/02
 
 Commit: e8af43794f1b19630ec32594c486be2a666b3d65
