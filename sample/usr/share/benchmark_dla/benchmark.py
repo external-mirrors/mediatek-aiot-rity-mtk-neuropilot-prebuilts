@@ -333,7 +333,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-pwd = os. getcwd()
+pwd = "/usr/share/benchmark_dla/"
 
 
 # preapre log
@@ -361,9 +361,9 @@ if args.auto is True or args.stress is True:
     # auto run, find all models in current folder and inference them one by one
     for file in os.listdir(pwd):
         if file.endswith('.tflite'):
-            modeil_io = query_tflite_model_io_info(file)
+            modeil_io = query_tflite_model_io_info(pwd+file)
             compile_options = args.options + modeil_io.recommand_compile_options
-            benchmark_tflite_model_auto(file, args.count, compile_options, cache_dla, args.profile)
+            benchmark_tflite_model_auto(pwd+file, args.count, compile_options, cache_dla, args.profile)
 
 else:
     if os.path.exists(args.file):

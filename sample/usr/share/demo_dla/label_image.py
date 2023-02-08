@@ -6,11 +6,11 @@ from PIL import Image
 
 mdla_backend = []
 
-img_file = "grace_hopper.jpg"
-img_bin = "grace_hopper.bin"
-tflite_model = "mobilenet_v1_1.0_224_quant.tflite"
-dla_model = "mobilenet_v1_1.0_224_quant.dla"
-label_file = "imagenet_slim_labels.txt"
+img_file = "/usr/share/demo_dla/grace_hopper.jpg"
+img_bin_path = "/usr/share/demo_dla/grace_hopper.bin"
+tflite_model = "/usr/share/demo_dla/mobilenet_v1_1.0_224_quant.tflite"
+dla_model_path = "/usr/share/demo_dla/mobilenet_v1_1.0_224_quant.dla"
+label_file = "/usr/share/demo_dla/imagenet_slim_labels.txt"
 
 def query_backends():
   batcmd = ('ncc-tflite --arch=?')
@@ -34,16 +34,13 @@ def img_to_bin():
     img = img.resize(newsize)
     img_raw = np.asarray(img)
     img_data = np.reshape(img_raw, (1, 224, 224, 3))
-    img_data.tofile(img_bin);
+    img_data.tofile(img_bin_path);
 
 def tflite_to_dla():
-    sp.getoutput("ncc-tflite -arch %s %s -o %s" % (mdla_backend[0], tflite_model, dla_model))
+    sp.getoutput("ncc-tflite -arch %s %s -o %s" % (mdla_backend[0], tflite_model, dla_model_path))
 
 def inference_dla():
-    pwd = os. getcwd()
     
-    dla_model_path = pwd + '/' + dla_model;
-    img_bin_path = pwd + '/' + img_bin;
     print(dla_model_path)
     print(img_bin_path)
     out = sp.getoutput("runtime_api_sample %s %s" % (dla_model_path, img_bin_path))
