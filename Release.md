@@ -1,5 +1,37 @@
 # Release Note
 
+## 2023/07/21
+
+Commit:  a3a3a147b562b96785ebdaccadbfb2da619ff451
+
+- Binaries source:
+
+  - Repo: aiot_int/bsp/neuron-pilot-dev
+  - Branch: NP6_0
+  - Commit:  31b04ec356c3d2ca8319d74b29cc5d2965bf7e1b
+
+|               Binary               |                  Commit                  |        Branch        | Module |
+| :--------------------------------: | :--------------------------------------: | :------------------: | :----: |
+|        libapu_mdw.so.2.0.0         | 57b1d899ada6731c1cc839305ef9dad7acfc3bde | aiv-mp-hardknott.mp1 |        |
+|     libapu_mdw_batch.so.2.0.0      | 57b1d899ada6731c1cc839305ef9dad7acfc3bde | aiv-mp-hardknott.mp1 |        |
+|      libapusys_edma.so.3.0.0       | 57b1d899ada6731c1cc839305ef9dad7acfc3bde | aiv-mp-hardknott.mp1 |        |
+|        libmdla_ut.so.2.0.0         | 78a707e2cda54500af8db2b2f1b479be9fc7ca6e |    alps-mp-t0.mp1    |        |
+|        libmdla_ut.so.3.0.0         | 78a707e2cda54500af8db2b2f1b479be9fc7ca6e |    alps-mp-t0.mp1    |        |
+|          libvpu5.so.5.0.0          | 4ad18f265d97cf44ed3badc491cdceb891da9cbf |    alps-mp-t0.mp5    |        |
+| libneuronusdk_runtime.mtk.so.6.2.3 | 31b04ec356c3d2ca8319d74b29cc5d2965bf7e1b |        NP6_0         |        |
+| libneuronusdk_adapter.mtk.so.6.2.3 | 31b04ec356c3d2ca8319d74b29cc5d2965bf7e1b |        NP6_0         |        |
+|     libneuron_platform.vpu.so      | 31b04ec356c3d2ca8319d74b29cc5d2965bf7e1b |        NP6_0         |        |
+|             ncc-tflite             | 31b04ec356c3d2ca8319d74b29cc5d2965bf7e1b |        NP6_0         |        |
+|              neuronrt              | 31b04ec356c3d2ca8319d74b29cc5d2965bf7e1b |        NP6_0         |        |
+|         runtime_api_sample         | 31b04ec356c3d2ca8319d74b29cc5d2965bf7e1b |        NP6_0         |        |
+
+Changes:
+
+-  Refine error message to print detailed information for easier debugging
+  - Refine error message when checking bias quantization
+  * Print detailed error message when CONV_2D check failed
+  * Print detailed error message when PRelu layer verify failed
+
 ## 2023/02/08
 
 Commit:  44fe607495911c4617252d9da39b9d221788aeb1 
