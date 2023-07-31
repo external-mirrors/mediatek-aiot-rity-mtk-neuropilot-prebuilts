@@ -332,8 +332,9 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-
-pwd = "/usr/share/benchmark_dla/"
+# get python script location
+head, tail = os.path.split(__file__)
+pwd = os.path.join(head, '')
 
 
 # preapre log
