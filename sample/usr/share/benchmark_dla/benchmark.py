@@ -304,7 +304,7 @@ parser.add_argument(
 
 parser.add_argument(
         '--file',
-        default=None,
+        default="",
         help='Input a tflite model to inference. it will be executed with option: --target')
 
 parser.add_argument(
