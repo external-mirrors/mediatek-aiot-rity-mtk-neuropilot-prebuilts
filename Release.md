@@ -1,5 +1,15 @@
 # Release Note
 
+## 2023/07/31
+
+Commit:   f6409400b13be0971d682592600b5048a2847575
+
+Changes:
+
+- Update demo script to remove hardcoded python script path
+- Update benchmark script to remove hardcoded python script path
+- Update benchmark script to add error handling for missing input file
+
 ## 2023/07/26
 
 Binaries source:
@@ -8,7 +18,7 @@ Binaries source:
 
 - Branch: NP6_0
 
-- Commit:   0a2ec1cdd662d3e980cd7488ba9aa094283e1d9b 
+- Commit:   0a2ec1cdd662d3e980cd7488ba9aa094283e1d9b
 
   |               Binary               |                  Commit                  |        Branch        | Module |
   | :--------------------------------: | :--------------------------------------: | :------------------: | :----: |
