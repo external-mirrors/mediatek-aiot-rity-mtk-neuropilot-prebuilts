@@ -1,5 +1,13 @@
 # Release Note
 
+## 2023/08/10
+
+Commit:   3b73fca6a790cebedd298253ce97496257361f7b
+
+Changes:
+
+- Fix syntax error in label_image.py
+
 ## 2023/07/31
 
 Commit:   f6409400b13be0971d682592600b5048a2847575
