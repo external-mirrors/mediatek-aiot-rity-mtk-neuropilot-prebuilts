@@ -1,8 +1,6 @@
 # Release Note
 
-## 2023/12/7
-
-Commit: cbad8ce916ff4e676defa13563b660c6673d28e0
+## 2024/5/6
 
 Binaries source:
 
@@ -10,7 +8,7 @@ Binaries source:
 
 - Branch: NP6_0
 
-- Commit:   c3532ffd7cf5fed19b696d2f5a354f6f13fb5d59
+- Commit:   78a4c98b2d4e64d5869cf101961ffee6bd78530f
 
   |               Binary               |                  Commit                  |         Repo/Branch         | Module |
   | :--------------------------------: | :--------------------------------------: | :-------------------------: | :----: |
@@ -20,17 +18,17 @@ Binaries source:
   |        libmdla_ut.so.2.0.0         | c3532ffd7cf5fed19b696d2f5a354f6f13fb5d59 |       alps-mp-t0.mp1        |        |
   |        libmdla_ut.so.3.0.0         | 78a707e2cda54500af8db2b2f1b479be9fc7ca6e |       alps-mp-t0.mp1        |        |
   |          libvpu5.so.5.0.0          | 4ad18f265d97cf44ed3badc491cdceb891da9cbf |       alps-mp-t0.mp5        |        |
-  | libneuronusdk_runtime.mtk.so.6.3.3 | dff37081fa477fd861f859e782c4b12bcd71ab66 |           NP6_0             |        | 
-  | libneuronusdk_adapter.mtk.so.6.3.3 | dff37081fa477fd861f859e782c4b12bcd71ab66 |           NP6_0             |        | 
-  |     libneuron_platform.vpu.so      | dff37081fa477fd861f859e782c4b12bcd71ab66 |           NP6_0             |        | 
-  |             ncc-tflite             | 31b04ec356c3d2ca8319d74b29cc5d2965bf7e1b |           NP6_0             |        |
-  |              neuronrt              | 31b04ec356c3d2ca8319d74b29cc5d2965bf7e1b |           NP6_0             |        |
-  |         runtime_api_sample         | 31b04ec356c3d2ca8319d74b29cc5d2965bf7e1b |           NP6_0             |        |
+  | libneuronusdk_runtime.mtk.so.6.3.3 | 5306284d66bd2bb9577e642043f0bfa52a79a76a |           NP6_0             |        | 
+  | libneuronusdk_adapter.mtk.so.6.3.3 | 5306284d66bd2bb9577e642043f0bfa52a79a76a |           NP6_0             |        | 
+  |     libneuron_platform.vpu.so      | 5306284d66bd2bb9577e642043f0bfa52a79a76a |           NP6_0             |        | 
+  |             ncc-tflite             | 78a4c98b2d4e64d5869cf101961ffee6bd78530f |           NP6_0             |        |
+  |              neuronrt              | 5306284d66bd2bb9577e642043f0bfa52a79a76a |           NP6_0             |        |
+  |         runtime_api_sample         | 5306284d66bd2bb9577e642043f0bfa52a79a76a |           NP6_0             |        |
 
 
 Changes:
-- Turn off libcmdl warning log if GPU is disabled
-- Update midware library
+- Remove unnessary dependency on ncurses/libtinfo
+- Hash bump for ncc-tflite
 
 ## 2023/12/5
 
