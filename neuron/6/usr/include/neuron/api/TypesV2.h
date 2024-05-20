@@ -22,6 +22,31 @@ typedef enum {
     DimensionSize = Invalid,  ///< Dimension size.
 } RuntimeAPIDimIndex;
 
+typedef enum {
+    // Signed integer types
+    INT4 = 10,
+    INT8 = 11,
+    INT12 = 12,
+    INT16 = 13,
+    INT32 = 14,
+    INT64 = 15,
+
+    // Unsigned integer types
+    UINT4 = 20,
+    UINT8 = 21,
+    UINT12 = 22,
+    UINT16 = 23,
+    UINT32 = 24,
+    UINT64 = 25,
+
+    // Floating-point types
+    FLOAT16 = 30,
+    FLOAT32 = 31,
+    DOUBLE = 32,
+    BFLOAT16 = 33,
+    DLFLOAT16 = 34,
+} RuntimeAPIDataType;
+
 /// Execution preference.
 /// @note This enum is not supported on MediaTek TV platforms (MT99XX/MT96XX/MT76XX/MT58XX).
 typedef enum {

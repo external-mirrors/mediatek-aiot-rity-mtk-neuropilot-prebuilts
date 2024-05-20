@@ -1,5 +1,35 @@
 # Release Note
 
+## 2024/5/20
+
+Binaries source:
+
+- Repo: aiot_int/bsp/neuron-pilot-dev
+
+- Branch: NP6_0
+
+- Commit:   fc1df999d16107994636c0452cd20bfab46cc8a5
+
+  |               Binary               |                  Commit                  |         Repo/Branch         | Module |
+  | :--------------------------------: | :--------------------------------------: | :-------------------------: | :----: |
+  |        libapu_mdw.so.2.0.0         | 88f5f1215381087737b262747ff2901260c0fef4 |    aiv-mp-hardknott.mp1     |        |
+  |     libapu_mdw_batch.so.2.0.0      | 88f5f1215381087737b262747ff2901260c0fef4 |    aiv-mp-hardknott.mp1     |        |
+  |      libapusys_edma.so.3.0.0       | 88f5f1215381087737b262747ff2901260c0fef4 |    aiv-mp-hardknott.mp1     |        |
+  |        libmdla_ut.so.2.0.0         | c3532ffd7cf5fed19b696d2f5a354f6f13fb5d59 |       alps-mp-t0.mp1        |        |
+  |        libmdla_ut.so.3.0.0         | 78a707e2cda54500af8db2b2f1b479be9fc7ca6e |       alps-mp-t0.mp1        |        |
+  |          libvpu5.so.5.0.0          | 4ad18f265d97cf44ed3badc491cdceb891da9cbf |       alps-mp-t0.mp5        |        |
+  | libneuronusdk_runtime.mtk.so.6.3.3 | fc1df999d16107994636c0452cd20bfab46cc8a5 |           NP6_0             |        | 
+  | libneuronusdk_adapter.mtk.so.6.3.3 | fc1df999d16107994636c0452cd20bfab46cc8a5 |           NP6_0             |        | 
+  |     libneuron_platform.vpu.so      | fc1df999d16107994636c0452cd20bfab46cc8a5 |           NP6_0             |        | 
+  |             ncc-tflite             | fc1df999d16107994636c0452cd20bfab46cc8a5 |           NP6_0             |        |
+  |              neuronrt              | fc1df999d16107994636c0452cd20bfab46cc8a5 |           NP6_0             |        |
+  |         runtime_api_sample         | fc1df999d16107994636c0452cd20bfab46cc8a5 |           NP6_0             |        |
+
+
+Changes:
+- Hash bump for libneuron
+- Update the binary for ncc-tflite which is dependent on libneuron
+
 ## 2024/5/6
 
 Binaries source:

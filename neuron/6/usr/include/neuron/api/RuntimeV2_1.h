@@ -277,6 +277,27 @@ int NeuronRuntimeV2_getOutputPaddedDimensions(void* runtime, uint64_t handle,
  */
 int NeuronRuntimeV2_getOutputRank(void* runtime, uint64_t handle, uint32_t* rank);
 
+
+/**
+ * Get the datatype of input tensor (specified by handle).
+ * Pass back the datatype in *type for the tensor which holds the specified input handle.
+ * @param runtime The address of the created neuron runtime instance.
+ * @param handle The frontend IO index.
+ * @param type The input datatype.
+ * @return A RuntimeAPI error code.
+ */
+int NeuronRuntimeV2_getInputDataType(void* runtime, uint64_t handle, int8_t* type);
+/**
+ * Get the datatype of output tensor (specified by handle).
+ * Pass back the datatype in *type for the tensor which holds the specified output handle.
+ * @param runtime The address of the created neuron runtime instance.
+ * @param handle The frontend IO index.
+ * @param type The output datatype.
+ * @return A RuntimeAPI error code.
+ */
+int NeuronRuntimeV2_getOutputDataType(void* runtime, uint64_t handle, int8_t* type);
+
+
 /**
  * Set shape for the input tensor which hold the specified input handle in the
  * original network. If there are multiple inputs with dynamic shapes, each of
@@ -345,5 +366,12 @@ int NeuronRuntimeV2_getMetadataInfo(void* runtime, const char* key, size_t* size
  * @return A RuntimeAPI error code.
  */
 int NeuronRuntimeV2_getMetadata(void* runtime, const char* key, char* data, size_t size);
+
+/**
+ * Get num-mdla in dla file, which is provided through compiler option.
+ * @param runtime The address of the created neuron runtime instance.
+ * @param coreNum The num-mdla in compiler option of this model
+ */
+int NeuronRuntimeV2_getDlaCompiledCoreNum(void* runtime, uint8_t* coreNum);
 
 __END_DECLS
