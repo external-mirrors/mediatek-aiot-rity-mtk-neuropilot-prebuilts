@@ -1,5 +1,43 @@
 # Release Note
 
+## 2024/11/19
+
+Binaries source:
+
+- Repo: aiot_int/bsp/neuron-pilot-dev
+
+- Branch: NP6_0
+
+- Commit:   633cf50420c26df6ef09e2cc5514efe386bd82c9
+
+  |               Binary               |                  Commit                  |         Repo/Branch         | Module |
+  | :--------------------------------: | :--------------------------------------: | :-------------------------: | :----: |
+  |        libapu_mdw.so.2.0.0         | b2e99f004964a5b44e215a98549bdc69938b9375 |    aiv-mp-kirkstone.mp1     |        |
+  |     libapu_mdw_batch.so.2.0.0      | b2e99f004964a5b44e215a98549bdc69938b9375 |    aiv-mp-kirkstone.mp1     |        |
+  |      libapusys_edma.so.3.0.0       | b2e99f004964a5b44e215a98549bdc69938b9375 |    aiv-mp-kirkstone.mp1     |        |
+  |        libmdla_ut.so.2.0.0         | 78a707e2cda54500af8db2b2f1b479be9fc7ca6e |       alps-mp-t0.mp1        |        |
+  |        libmdla_ut.so.3.0.0         | 78a707e2cda54500af8db2b2f1b479be9fc7ca6e |       alps-mp-t0.mp1        |        |
+  |          libvpu5.so.5.0.0          | 4ad18f265d97cf44ed3badc491cdceb891da9cbf |       alps-mp-t0.mp5        |        |
+  | libneuronusdk_runtime.mtk.so.6.3.3 | 633cf50420c26df6ef09e2cc5514efe386bd82c9 |           NP6_0             |        |
+  | libneuronusdk_adapter.mtk.so.6.3.3 | 633cf50420c26df6ef09e2cc5514efe386bd82c9 |           NP6_0             |        |
+  |     libneuron_platform.vpu.so      | 633cf50420c26df6ef09e2cc5514efe386bd82c9 |           NP6_0             |        |
+  |             ncc-tflite             | 633cf50420c26df6ef09e2cc5514efe386bd82c9 |           NP6_0             |        |
+  |              neuronrt              | 633cf50420c26df6ef09e2cc5514efe386bd82c9 |           NP6_0             |        |
+  |         runtime_api_sample         | 633cf50420c26df6ef09e2cc5514efe386bd82c9 |           NP6_0             |        |
+
+
+Changes:
+
+* libneuron
+  - Hash bump for follwing change in source repo
+    - Bug fixing for [AUTO00302004] Error while trying to run a yolov8
+  - Add support for dynamic nhw loading
+
+* midware
+  - Hash bump for follwing change in source repo
+    - apusys: fix coverity 10948845
+    - Change the source branch from aiv-mp-hardknott.mp1 to to aiv-mp-kirkstone.mp1
+
 ## 2024/5/20
 
 Binaries source:
@@ -15,7 +53,7 @@ Binaries source:
   |        libapu_mdw.so.2.0.0         | 88f5f1215381087737b262747ff2901260c0fef4 |    aiv-mp-hardknott.mp1     |        |
   |     libapu_mdw_batch.so.2.0.0      | 88f5f1215381087737b262747ff2901260c0fef4 |    aiv-mp-hardknott.mp1     |        |
   |      libapusys_edma.so.3.0.0       | 88f5f1215381087737b262747ff2901260c0fef4 |    aiv-mp-hardknott.mp1     |        |
-  |        libmdla_ut.so.2.0.0         | c3532ffd7cf5fed19b696d2f5a354f6f13fb5d59 |       alps-mp-t0.mp1        |        |
+  |        libmdla_ut.so.2.0.0         | 78a707e2cda54500af8db2b2f1b479be9fc7ca6e |       alps-mp-t0.mp1        |        |
   |        libmdla_ut.so.3.0.0         | 78a707e2cda54500af8db2b2f1b479be9fc7ca6e |       alps-mp-t0.mp1        |        |
   |          libvpu5.so.5.0.0          | 4ad18f265d97cf44ed3badc491cdceb891da9cbf |       alps-mp-t0.mp5        |        |
   | libneuronusdk_runtime.mtk.so.6.3.3 | fc1df999d16107994636c0452cd20bfab46cc8a5 |           NP6_0             |        | 
@@ -45,7 +83,7 @@ Binaries source:
   |        libapu_mdw.so.2.0.0         | 88f5f1215381087737b262747ff2901260c0fef4 |    aiv-mp-hardknott.mp1     |        |
   |     libapu_mdw_batch.so.2.0.0      | 88f5f1215381087737b262747ff2901260c0fef4 |    aiv-mp-hardknott.mp1     |        |
   |      libapusys_edma.so.3.0.0       | 88f5f1215381087737b262747ff2901260c0fef4 |    aiv-mp-hardknott.mp1     |        |
-  |        libmdla_ut.so.2.0.0         | c3532ffd7cf5fed19b696d2f5a354f6f13fb5d59 |       alps-mp-t0.mp1        |        |
+  |        libmdla_ut.so.2.0.0         | 78a707e2cda54500af8db2b2f1b479be9fc7ca6e |       alps-mp-t0.mp1        |        |
   |        libmdla_ut.so.3.0.0         | 78a707e2cda54500af8db2b2f1b479be9fc7ca6e |       alps-mp-t0.mp1        |        |
   |          libvpu5.so.5.0.0          | 4ad18f265d97cf44ed3badc491cdceb891da9cbf |       alps-mp-t0.mp5        |        |
   | libneuronusdk_runtime.mtk.so.6.3.3 | 5306284d66bd2bb9577e642043f0bfa52a79a76a |           NP6_0             |        | 
