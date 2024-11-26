@@ -259,6 +259,8 @@ def benchmark_dla_model(model, count=100, profile=False):
     gen_input_bin_dla(modeil_io)
 
     # inference
+    # currently we don't support the user option for setting the name of input.bin 
+    input_bin = 'input.bin' 
     batcmd = 'neuronrt -m hw -a %s -c %s -b 100 -i %s ' % (model, count, input_bin)
     for i in range(modeil_io.output_count):
         batcmd = batcmd + (' -o output_%s.bin ' % i)
