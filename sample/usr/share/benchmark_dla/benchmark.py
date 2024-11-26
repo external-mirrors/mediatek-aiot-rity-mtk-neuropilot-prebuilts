@@ -90,11 +90,10 @@ def query_dla_model_io_info(model):
 
     batcmd = ('neuronrt -a %s -d' % model)
     result = os.popen(batcmd).read()
-
-	# find input size
-    match = re.search('Handle = 0, <(\d+) x (\d+) x (\d+) x (\d+)>', result)
+    # find input size
+    match = re.search('size = (\d+) bytes', result)
     if match:
-        intput_size = ( int(match.group(1)), int(match.group(2)), int(match.group(3)), int(match.group(4)) )
+        intput_size = (int(match.group(1)))
     else:
         logging.error("FAIL to find input size of model")
         return
@@ -122,6 +121,9 @@ def gen_input_bin(model_io, filename):
         ndarray = np.float32(ndarray)/255.0
     ndarray.tofile(filename)
 
+def gen_input_bin_dla(model_io):
+    batcmd = ('dd if=/dev/urandom of=input.bin bs=%d count=1' % model_io.intput_size)
+    res = subprocess.run(batcmd, shell=True, check=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
 def tflite_2_dla(tflite_model, target, dla_model, compile_options=""):
     # compile for specific target
@@ -254,8 +256,7 @@ def benchmark_dla_model(model, count=100, profile=False):
         os.environ["MTKNN_ENABLE_PROFILER"] = "1"
 
     # gen rand input.bin
-    input_bin = 'input.bin'
-    gen_input_bin(modeil_io, input_bin)
+    gen_input_bin_dla(modeil_io)
 
     # inference
     batcmd = 'neuronrt -m hw -a %s -c %s -b 100 -i %s ' % (model, count, input_bin)
