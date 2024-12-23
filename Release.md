@@ -1,5 +1,38 @@
 # Release Note
 
+## 2024/12/23
+
+Binaries source:
+
+- Repo: aiot_int/bsp/neuron-pilot-dev
+
+- Branch: NP6_0
+
+- Commit:   633cf50420c26df6ef09e2cc5514efe386bd82c9
+
+  |               Binary               |                  Commit                  |         Repo/Branch         | Module |
+  | :--------------------------------: | :--------------------------------------: | :-------------------------: | :----: |
+  |        libapu_mdw.so.2.0.0         | b2e99f004964a5b44e215a98549bdc69938b9375 |    aiv-mp-kirkstone.mp1     |        |
+  |     libapu_mdw_batch.so.2.0.0      | b2e99f004964a5b44e215a98549bdc69938b9375 |    aiv-mp-kirkstone.mp1     |        |
+  |      libapusys_edma.so.3.0.0       | b2e99f004964a5b44e215a98549bdc69938b9375 |    aiv-mp-kirkstone.mp1     |        |
+  |        libmdla_ut.so.2.0.0         | 78a707e2cda54500af8db2b2f1b479be9fc7ca6e |       alps-mp-t0.mp1        |        |
+  |        libmdla_ut.so.3.0.0         | 78a707e2cda54500af8db2b2f1b479be9fc7ca6e |       alps-mp-t0.mp1        |        |
+  |          libvpu5.so.5.0.0          | 4ad18f265d97cf44ed3badc491cdceb891da9cbf |       alps-mp-t0.mp5        |        |
+  | libneuronusdk_runtime.mtk.so.6.3.3 | 553bb891aa37017dbbef35ab676304845fa459e8 |           NP6_0             |        |
+  | libneuronusdk_adapter.mtk.so.6.3.3 | 553bb891aa37017dbbef35ab676304845fa459e8 |           NP6_0             |        |
+  |     libneuron_platform.vpu.so      | 553bb891aa37017dbbef35ab676304845fa459e8 |           NP6_0             |        |
+  |             ncc-tflite             | 633cf50420c26df6ef09e2cc5514efe386bd82c9 |           NP6_0             |        |
+  |              neuronrt              | 633cf50420c26df6ef09e2cc5514efe386bd82c9 |           NP6_0             |        |
+  |         runtime_api_sample         | 633cf50420c26df6ef09e2cc5514efe386bd82c9 |           NP6_0             |        |
+
+
+Changes:
+
+* libneuron
+  - Hash bump for including follwing change in source repo
+    - [AUTO00182656] To support diverse platform in a single image using environment variable
+    - [MDLA/3.x] Fix Softmax with channel = 2 and beta != 1.0 accuracy issue
+
 ## 2024/11/19
 
 Binaries source:
