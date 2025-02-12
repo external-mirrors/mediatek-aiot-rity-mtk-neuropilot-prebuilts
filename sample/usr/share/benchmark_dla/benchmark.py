@@ -50,7 +50,7 @@ def query_tflite_model_io_info(model):
     logging.debug(result)
 
     # find output count
-    match = re.search('of output tensors: (\d+)', result)
+    match = re.search(r'of output tensors: (\d+)', result)
     if match:
         output_count = int(match.group(1))
     else:
@@ -61,7 +61,7 @@ def query_tflite_model_io_info(model):
 
     # find input size
     tmp = result.partition("# of output tensors")[0]
-    match = re.search('Shape: {(\d+),(\d+),(\d+),(\d+)}', tmp)
+    match = re.search(r'Shape: {(\d+),(\d+),(\d+),(\d+)}', tmp)
     if match:
         intput_size = ( int(match.group(1)), int(match.group(2)), int(match.group(3)), int(match.group(4)) )
     else:
@@ -71,7 +71,7 @@ def query_tflite_model_io_info(model):
     ret.intput_size = intput_size
 
     # find input type
-    match = re.search('Type: (\w+)', tmp)
+    match = re.search(r'Type: (\w+)', tmp)
     if match:
         intput_type = (match.group(1))
     else:
@@ -90,10 +90,11 @@ def query_dla_model_io_info(model):
 
     batcmd = ('neuronrt -a %s -d' % model)
     result = os.popen(batcmd).read()
-    # find input size
-    match = re.search('size = (\d+) bytes', result)
+
+	# find input size
+    match = re.search(r'Handle = 0, <(\d+) x (\d+) x (\d+) x (\d+)>', result)
     if match:
-        intput_size = (int(match.group(1)))
+        intput_size = ( int(match.group(1)), int(match.group(2)), int(match.group(3)), int(match.group(4)) )
     else:
         logging.error("FAIL to find input size of model")
         return
@@ -121,9 +122,6 @@ def gen_input_bin(model_io, filename):
         ndarray = np.float32(ndarray)/255.0
     ndarray.tofile(filename)
 
-def gen_input_bin_dla(model_io):
-    batcmd = ('dd if=/dev/urandom of=input.bin bs=%d count=1' % model_io.intput_size)
-    res = subprocess.run(batcmd, shell=True, check=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
 def tflite_2_dla(tflite_model, target, dla_model, compile_options=""):
     # compile for specific target
@@ -181,7 +179,7 @@ def benchmark_tflite_model_auto(model, count=100, compile_options="", cache_dla=
         logging.debug(result)
 
         # find 'Total inference time' in output log
-        match = re.search('Total inference time = (\d+)', result)
+        match = re.search(r'Total inference time = (\d+)', result)
         if match:
             time = float(match.group(1))
             # calculate avg inference time
@@ -231,7 +229,7 @@ def benchmark_tflite_model(model, target, count=100, compile_options="", cache_d
         os.remove(dla)
 
     # find 'Total inference time' in output log
-    match = re.search('Total inference time = (\d+)', result)
+    match = re.search(r'Total inference time = (\d+)', result)
     if match:
         time = float(match.group(1))
         # calculate avg inference time
@@ -256,11 +254,10 @@ def benchmark_dla_model(model, count=100, profile=False):
         os.environ["MTKNN_ENABLE_PROFILER"] = "1"
 
     # gen rand input.bin
-    gen_input_bin_dla(modeil_io)
+    input_bin = 'input.bin'
+    gen_input_bin(modeil_io, input_bin)
 
     # inference
-    # currently we don't support the user option for setting the name of input.bin 
-    input_bin = 'input.bin' 
     batcmd = 'neuronrt -m hw -a %s -c %s -b 100 -i %s ' % (model, count, input_bin)
     for i in range(modeil_io.output_count):
         batcmd = batcmd + (' -o output_%s.bin ' % i)
@@ -278,7 +275,7 @@ def benchmark_dla_model(model, count=100, profile=False):
     logging.debug(result)
 
     # find 'Total inference time' in output log
-    match = re.search('Total inference time = (\d+)', result)
+    match = re.search(r'Total inference time = (\d+)', result)
     if match:
         time = float(match.group(1))
         # calculate avg inference time
