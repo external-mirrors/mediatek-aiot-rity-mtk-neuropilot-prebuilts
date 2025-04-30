@@ -1,5 +1,36 @@
 # Release Note
 
+## 2025/4/30
+
+Binaries source:
+
+- Repo: aiot_int/bsp/neuron-pilot-dev
+
+- Branch: NP6_0
+
+- Commit:   553bb891aa37017dbbef35ab676304845fa459e8
+
+  |               Binary               |                  Commit                  |         Repo/Branch         |  What's Changed  |
+  | :--------------------------------: | :--------------------------------------: | :-------------------------: | :--------------: |
+  |        libapu_mdw.so.2.0.0         | b2e99f004964a5b44e215a98549bdc69938b9375 |    aiv-mp-kirkstone.mp1     |                  |
+  |     libapu_mdw_batch.so.2.0.0      | b2e99f004964a5b44e215a98549bdc69938b9375 |    aiv-mp-kirkstone.mp1     |                  |
+  |      libapusys_edma.so.3.0.0       | b2e99f004964a5b44e215a98549bdc69938b9375 |    aiv-mp-kirkstone.mp1     |                  |
+  |        libmdla_ut.so.2.0.0         | 78a707e2cda54500af8db2b2f1b479be9fc7ca6e |       alps-mp-t0.mp1        |                  |
+  |        libmdla_ut.so.3.0.0         | 78a707e2cda54500af8db2b2f1b479be9fc7ca6e |       alps-mp-t0.mp1        |                  |
+  |          libvpu5.so.5.0.0          | 4ad18f265d97cf44ed3badc491cdceb891da9cbf |       alps-mp-t0.mp5        |                  |
+  | libneuronusdk_runtime.mtk.so.6.3.3 | 553bb891aa37017dbbef35ab676304845fa459e8 |           NP6_0             |                  |
+  | libneuronusdk_adapter.mtk.so.6.3.3 | 553bb891aa37017dbbef35ab676304845fa459e8 |           NP6_0             |                  |
+  |     libneuron_platform.vpu.so      | 553bb891aa37017dbbef35ab676304845fa459e8 |           NP6_0             |                  |
+  |             ncc-tflite             | 553bb891aa37017dbbef35ab676304845fa459e8 |           NP6_0             |         v        |
+  |              neuronrt              | 553bb891aa37017dbbef35ab676304845fa459e8 |           NP6_0             |         v        |
+  |         runtime_api_sample         | 553bb891aa37017dbbef35ab676304845fa459e8 |           NP6_0             |         v        |
+
+
+Changes:
+
+* ncc-tflite/neruonrt/runtime_api_sample
+  - Update neuron tools for supporting dynamic nhw loading with environment variable
+
 ## 2024/12/23
 
 Binaries source:
