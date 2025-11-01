@@ -6,7 +6,7 @@ import numpy as np
 import logging
 import subprocess
 
-available_backends = []
+available_backends = ['mdla5.3']
 
 DIRTY = 1
 CLEAR_DIRTY = 0
@@ -287,7 +287,6 @@ def benchmark_dla_model(model, count=100, profile=False):
     logging.info('%s, avg inference time: %s' % (model, avg_time))
 
 
-query_backends()
 
 # argument parser
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
@@ -361,18 +360,12 @@ if args.auto is True or args.stress is True:
 
     # auto run, find all models in current folder and inference them one by one
     for file in os.listdir(pwd):
-        if file.endswith('.tflite'):
-            modeil_io = query_tflite_model_io_info(pwd+file)
-            compile_options = args.options + modeil_io.recommand_compile_options
-            benchmark_tflite_model_auto(pwd+file, args.count, compile_options, cache_dla, args.profile)
+        if file.endswith('.dla'):
+            benchmark_dla_model(pwd+file, args.count, args.profile)
 
 else:
     if os.path.exists(args.file):
-        if args.file.endswith('.tflite'):
-            modeil_io = query_tflite_model_io_info(args.file)
-            compile_options = args.options + modeil_io.recommand_compile_options
-            benchmark_tflite_model(args.file, args.target, args.count, compile_options, False, args.profile)
-        elif args.file.endswith('.dla'):
+        if args.file.endswith('.dla'):
             benchmark_dla_model(args.file, args.count, args.profile)
     else:
         logging.error('Error to load model %s', args.file)
