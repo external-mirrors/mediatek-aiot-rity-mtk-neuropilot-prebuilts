@@ -28,6 +28,6 @@ install:
 
 	install -d $(DATADIR)
 	install -d $(DATADIR)/demo_dla
-	install $(PWD)/sample/usr/share/demo_dla/* $(DATADIR)/demo_dla
+	install $(PWD)/sample/${NP_VER}/usr/share/demo_dla/* $(DATADIR)/demo_dla
 	install -d $(DATADIR)/benchmark_dla
-	install $(PWD)/sample/usr/share/benchmark_dla/* $(DATADIR)/benchmark_dla
+	install $(PWD)/sample/${NP_VER}/usr/share/benchmark_dla/* $(DATADIR)/benchmark_dla
