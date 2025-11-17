@@ -70,8 +70,6 @@ if __name__ == "__main__":
     dla_model_path = pwd +"mobilenet_v1_1.0_224_quant.dla"
     label_file = pwd +"imagenet_slim_labels.txt"
 
-    query_backends()
     img_to_bin()
-    tflite_to_dla()
     inference_dla()
     
