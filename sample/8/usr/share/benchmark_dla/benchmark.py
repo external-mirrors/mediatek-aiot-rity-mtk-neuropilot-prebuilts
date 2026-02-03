@@ -91,7 +91,6 @@ def query_dla_model_io_info(model):
     batcmd = ('neuronrt -a %s -d' % model)
     result = os.popen(batcmd).read()
 
-	# find input size
     match = re.search(r'Handle = 0, <(\d+) x (\d+) x (\d+) x (\d+)>', result)
     if match:
         intput_size = ( int(match.group(1)), int(match.group(2)), int(match.group(3)), int(match.group(4)) )
@@ -247,20 +246,12 @@ def benchmark_dla_model(model, count=100, profile=False):
 
     os.environ["MTKNN_ENABLE_PROFILER"] = "0"
 
-    # find input size and output count of model
-    modeil_io = query_dla_model_io_info(model)
 
     if profile is True:
         os.environ["MTKNN_ENABLE_PROFILER"] = "1"
 
-    # gen rand input.bin
-    input_bin = 'input.bin'
-    gen_input_bin(modeil_io, input_bin)
-
     # inference
-    batcmd = 'neuronrt -m hw -a %s -c %s -b 100 -i %s ' % (model, count, input_bin)
-    for i in range(modeil_io.output_count):
-        batcmd = batcmd + (' -o output_%s.bin ' % i)
+    batcmd = 'neuronrt -m hw -a %s -c %s -b 100 --use-random-inputs ' % (model, count)
 
     if profile is True:
         logging.info("%s, inference start" % model)
@@ -285,7 +276,6 @@ def benchmark_dla_model(model, count=100, profile=False):
         return
 
     logging.info('%s, avg inference time: %s' % (model, avg_time))
-
 
 
 # argument parser
