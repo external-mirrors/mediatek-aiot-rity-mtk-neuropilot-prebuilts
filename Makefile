@@ -20,11 +20,20 @@ install:
 	install -d $(LIBDIR)
 	cp -a $(PWD)/neuron/${NP_VER}/usr/lib64/*.so* $(LIBDIR)
 	cp -a $(PWD)/mdw/${MDW_VER}/usr/lib64/*.so* $(LIBDIR)
-	
+
+	# Install llmsdk libraries for NP_VER 8
+	if [ "${NP_VER}" = "8" ] && [ -d "$(PWD)/llmsdk/8/usr/lib64" ]; then \
+		cp -a $(PWD)/llmsdk/8/usr/lib64/*.so* $(LIBDIR); \
+	fi
 
 	install -d $(SBINDIR)
 	install $(PWD)/neuron/${NP_VER}/usr/sbin/* $(SBINDIR)
 	install $(PWD)/mdw/${MDW_VER}/usr/sbin/* $(SBINDIR)
+
+	# Install llmsdk tools for NP_VER 8
+	if [ "${NP_VER}" = "8" ] && [ -d "$(PWD)/llmsdk/8/usr/sbin" ]; then \
+		install $(PWD)/llmsdk/8/usr/sbin/* $(SBINDIR); \
+	fi
 
 	install -d $(DATADIR)
 	install -d $(DATADIR)/demo_dla
