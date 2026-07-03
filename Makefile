@@ -32,7 +32,8 @@ install:
 
 	# Install llmsdk tools for NP_VER 8
 	if [ "${NP_VER}" = "8" ] && [ -d "$(PWD)/llmsdk/8/usr/sbin" ]; then \
-		install $(PWD)/llmsdk/8/usr/sbin/* $(SBINDIR); \
+		install $(PWD)/llmsdk/8/usr/sbin/llm_cmdline_tool $(SBINDIR); \
+		install $(PWD)/llmsdk/8/usr/sbin/mllm_llava $(SBINDIR); \
 	fi
 
 	install -d $(DATADIR)
