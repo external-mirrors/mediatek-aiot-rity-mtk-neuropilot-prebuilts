@@ -1,0 +1,56 @@
+# Whisper-small 8w16a (sym8W_sym16A) config — INT16 I/O boundaries.
+#
+# Same C++ runner as the dq/fp16 config; only the boundary TYPES + asset paths differ.
+# Unlike config_whisper_base.yaml (all FP16), this model has INT16 DLA I/O (with per-tensor
+# scale baked into the DLA): token embeddings, positional embeddings, mask, KV cache and logits
+# are all int16. The encoder log-mel input stays fp16 (fed by the runner), which is why there is
+# no separate "encoder input type" here.
+# All paths are ON-DEVICE paths under /usr/share/llm/whisper-base-8w16a/ (the whisper-base-8w16a inference package).
+
+modelOptions:
+  # Architecture (whisper-base: d_model 768, 12 enc/dec layers, 12 heads, head_dim 64)
+  promptTokenBatchSize: 1
+  genTokenBatchSize: 1
+  encTokenBatchSize: 1500
+  cacheSize: 256
+  hiddenSize: 512
+  numHead: 8
+  numLayer: 6
+  maxTokenLength: 448
+  encMaxTokenLength: 1500
+  vocabSize: 51865
+  # Types — INT16 boundaries (8w16a). modelInputType drives the token-embedding LUT dtype;
+  # rotEmbType the positional-embedding LUT; maskType the decoder attention mask; modelOutputType
+  # the logits (argmax + suppression). cacheType is informational (the KV cache shift-append is a
+  # raw 2-byte move, valid for both int16 and fp16).
+  modelInputType: INT16
+  modelOutputType: INT16
+  cacheType: INT16
+  maskType: INT16
+  rotEmbType: INT16
+  splitMask: false
+
+runtimeOptions:
+  specialTokens:
+    bosId: 50257   # Whisper has no separate BOS; SOT prefix is fed explicitly by the runner.
+    eosId: 50257   # <|endoftext|>
+    addBos: false  # SOT prefix is forced by the runner, not prepended by the tokenizer.
+
+  usePrefetch: false
+
+  tokenizerPath:
+    - /usr/share/llm/whisper-base-8w16a/tokenizer/vocab.txt
+    - /usr/share/llm/whisper-base-8w16a/tokenizer/merges.txt
+    - /usr/share/llm/whisper-base-8w16a/tokenizer/added_tokens.yaml
+
+  # Decoder additive absolute positional embedding [maxTokenLength, hiddenSize] INT16.
+  # Must be quantized at the decoder pos_emb INPUT scale. The SDK patch to utils._dump_pos_emb makes
+  # the exported embedding_pos_int16.bin correct out of the box (fed verbatim, like the token embed).
+  # (Requires the SDK pos-emb patch in 0_setup so embedding_pos_int16.bin is at the input scale.)
+  decPosEmbPath: /usr/share/llm/whisper-base-8w16a/tokenizer/embedding_pos_int16.bin
+  # Decoder token embedding [vocabSize, hiddenSize] INT16.
+  tokenEmbPath: /usr/share/llm/whisper-base-8w16a/tokenizer/embedding_int16.bin
+
+  dlaEncPath: /usr/share/llm/whisper-base-8w16a/encoder/whisper-base_mtk_precision_8w16a_Overall_0.dla
+  dlaGenPaths:
+    - /usr/share/llm/whisper-base-8w16a/256c/whisper-base_mtk_precision_8w16a_Overall_1t256c_0.dla

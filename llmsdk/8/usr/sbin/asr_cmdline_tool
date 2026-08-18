@@ -1,0 +1,98 @@
+#!/bin/sh
+# Single entry point for the on-device ASR runners.
+#
+#   asr_cmdline_tool <model> [--wav <file.wav>] [model args...]
+#   asr_cmdline_tool --list
+#
+# The dispatcher knows NO model names. It reads a drop-in descriptor
+# ${ASR_MODEL_DIR}/<model>.conf, which defines:
+#
+#   ASR_BIN       the runner (PATH name or absolute path)
+#   ASR_PRE_ARGS  optional leading args, typically the default config yaml
+#   ASR_ASSETS    optional colon-separated candidate asset dirs, reported by --list.
+#                 PATH-style on purpose: a descriptor is sourced, so a space-separated list
+#                 would be a syntax error the moment someone forgets the quotes.
+#
+# Adding a model = dropping one 2-line .conf here. This script never changes.
+# The one contract every runner must honour: it accepts --wav <file>.
+#
+# Exit codes: 2 = unknown model, 3 = model registered but its binary is not installed.
+
+set -u
+
+MODEL_DIR="${ASR_MODEL_DIR:-/usr/share/asr-cmdline-tool/models}"
+
+have() {
+    [ -n "$1" ] && { command -v "$1" >/dev/null 2>&1 || [ -x "$1" ]; }
+}
+
+# Only DLA assets small enough to justify it are built into the image (moonshine); the rest are
+# copied to the device separately, so a runner can be installed and still have nothing to run on.
+# Report that here rather than in the exec path: no extra stat per run, no extra exit code, and a
+# user who hits the runner's own "cannot open DLA" has one command that explains it.
+assets_status() { # $1 = colon-separated candidate dirs
+    [ -n "$1" ] || { echo ""; return; }
+    _oldifs=$IFS
+    IFS=:
+    set -- $1
+    IFS=$_oldifs
+    for d in "$@"; do
+        if [ -d "$d" ]; then
+            echo "assets: ok ($d)"
+            return
+        fi
+    done
+    echo "assets: MISSING $1"   # $1 is now the preferred (first) candidate
+}
+
+list_models() {
+    found=0
+    for f in "$MODEL_DIR"/*.conf; do
+        [ -f "$f" ] || continue
+        found=1
+        ASR_BIN=""
+        ASR_ASSETS=""
+        . "$f"
+        if have "$ASR_BIN"; then status="installed"; else status="NOT installed"; fi
+        printf '  %-12s %-24s %-14s %s\n' \
+            "$(basename "$f" .conf)" "$ASR_BIN" "$status" "$(assets_status "$ASR_ASSETS")"
+    done
+    [ "$found" = 1 ] || echo "  (no descriptors in $MODEL_DIR)"
+}
+
+usage() {
+    echo "Usage: asr_cmdline_tool <model> [--wav <file.wav>] [model args...]"
+    echo "Models:"
+    list_models
+}
+
+case "${1:-}" in
+    ''|-h|--help|--list) usage; exit 0 ;;
+esac
+
+MODEL="$1"
+shift
+
+CONF="$MODEL_DIR/$MODEL.conf"
+if [ ! -f "$CONF" ]; then
+    echo "asr_cmdline_tool: unknown model '$MODEL'" >&2
+    { echo "Models:"; list_models; } >&2
+    exit 2
+fi
+
+ASR_BIN=""
+ASR_PRE_ARGS=""
+. "$CONF"
+
+if ! have "$ASR_BIN"; then
+    echo "asr_cmdline_tool: '$MODEL' is registered but '$ASR_BIN' is not installed" >&2
+    exit 3
+fi
+
+# NOTE: $ASR_PRE_ARGS is unquoted on purpose — word-splitting is how a descriptor passes more
+# than one leading argument. On-device asset paths have no spaces; make this quote-aware only
+# if that ever changes.
+#
+# A user-supplied config wins over the injected default: both ASR runners assign
+# yamlConfigPath for ANY .yaml argument, so the later one (the user's) takes effect.
+exec "$ASR_BIN" $ASR_PRE_ARGS "$@"

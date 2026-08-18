@@ -1,0 +1,91 @@
+# Qwen3-ASR-0.6B v0.6 FMS — Yocto / Genio-720 flavour of the vendor
+# config_qwen3_asr_0.6b_v0p6_fms.yaml. Only the asset PATHS differ from the vendor file
+# (/data/local/tmp/llm_sdk/... -> /usr/share/llm/...); every modelOptions value is identical.
+#
+# All paths are ON-DEVICE paths under /usr/share/llm/qwen3-asr-0.6b/ — copy the assets there with
+# scp at runtime (~1.06 GB total, so they are deliberately not baked into the image):
+#
+#   encoder/            <encoder>.dla                (~189 MB)
+#   llm_256t2048c_fms/  <prompt shell>.dla           (~3.6 MB)
+#   llm_1t2048c_fms/    <gen shell>.dla              (~1.9 MB)
+#   shared_weights_fms/ shared_weights_diff_0.bin    (~572 MB)
+#   qwen3_asr/          vocab.txt merges.txt added_tokens.yaml embedding_fp16.bin  (~301 MB)
+#
+# The DLAs shipped in the vendor bundle are compiled for D9400 (mt6991) / NeuroPilot np9 and will
+# NOT load on this target. genio-720-evk is MT8391 (see meta-mediatek-bsp genio-720-evk.conf ->
+# mt8391.inc), whose APU config matches mt8189: --arch=mdla5.3,edma3.6 --l1-size-kb=256
+# --num-mdla=1. Recompile the shaped TFLites with the np8 ncc-tflite via
+#   Qwen3-ASR-0.6B-d9400/mt8189/.../compiler_options-np8/mt8189-compile-1core-256t-np8.sh
+# (flags need no edit for MT8391). The file names below are that script's output names.
+# embedding_fp16.bin and the tokenizer files are platform-independent.
+#
+# FMS variant notes (kept verbatim from the vendor config):
+#   rawA-lineage (is_vl=true + mRoPE collapsed to 1-D RoPE, FP16 rotEmb), now FMS'd (folded/shared
+#   model weights). The LLM weights live in sharedWeightsPaths and the prompt/gen DLAs are tiny FMS
+#   shells that map against it.
+#   useRotEmbHalfDim is FALSE — full 128-dim RoPE row layout [cos|cos|sin|sin] (Qwen3 default).
+#   FMS only folds linear-layer weights into the shared bin; it does NOT alter the RoPE input graph
+#   interface. (Setting `true` here would feed half-dim [cos|sin] inputs to a full-dim DLA ->
+#   garbled attention -> empty transcript.)
+modelOptions:
+  # Qwen3-ASR-0.6B LLM architecture (vs 1.7B: hidden 2048->1024, intermediate 6144->3072)
+  # Encoder differs too (d_model 1024->896, layers 24->18, heads 16->14, output_dim 2048->1024)
+  # but the runner does not care — encoder dims are encoded in the DLA itself.
+  promptTokenBatchSize: 256
+  genTokenBatchSize: 1
+  cacheSize: 2048
+  hiddenSize: 1024
+  numHead: 16
+  headDim: 128
+  numLayer: 28
+  maxTokenLength: 2049   # cacheSize (2048) + 1; no point allowing more than the cache holds
+  rotEmbBase: 1000000
+  rotEmbNumInputs: 2   # cos + sin fed separately
+  useRotEmbHalfDim: false
+
+  modelInputType: FP16   # suppress-input converts fp32 embedding -> fp16
+  modelOutputType: FP16  # suppress-output converts fp32 logits -> fp16 (DQ8W)
+  cacheType: FP16        # suppress-output converts fp32 KV cache -> fp16 (DQ8W)
+  maskType: FP16
+  rotEmbType: FP16
+
+  splitMask: true
+
+runtimeOptions:
+  specialTokens:
+    bosId: 151643   # <|endoftext|>
+    eosId: 151645   # <|im_end|>
+    addBos: false
+    stopToken:
+      - 151645
+      - 151643
+    # audio_start / audio_end are emitted as literal strings by the runner and resolved via
+    # vocab — only audioPadTokenId is consumed by the runner directly.
+    audioPadTokenId: 151676
+
+  tokenizerPath:
+    - /usr/share/llm/qwen3-asr-0.6b/tokenizer/vocab.txt
+    - /usr/share/llm/qwen3-asr-0.6b/tokenizer/merges.txt
+    - /usr/share/llm/qwen3-asr-0.6b/tokenizer/added_tokens.yaml
+
+  tokenEmbPath: /usr/share/llm/qwen3-asr-0.6b/tokenizer/embedding_fp16.bin
+
+  # Audio encoder DLA (full, NOT FMS'd) — input: fp32 [30,128,100] mel + fp32 [1,390] attn_mask;
+  #                    output: fp16 [1,390,1024] (suppressOutput_only compile, 0.6B output_dim=1024)
+  dlaEncPath: /usr/share/llm/qwen3-asr-0.6b/encoder/qwen3-asr-0.6b-dq8w-shaped_encoder_0.dla
+
+  # FMS'd shells — weights live in sharedWeightsPaths bin.
+  dlaPromptPaths:
+    - /usr/share/llm/qwen3-asr-0.6b/llm_256t2048c_fms/qwen3-asr-0.6b-dq8w-shaped_256t2048c_0.dla
+
+  dlaGenPaths:
+    - /usr/share/llm/qwen3-asr-0.6b/llm_1t2048c_fms/qwen3-asr-0.6b-dq8w-shaped_1t2048c_0.dla
+
+  # FMS shared weights — preloaded once at init; both DLA shells map against it.
+  # One bin per DLA chunk; the qwen3-asr-0.6b LLM is a single chunk (all 28 layers) -> one entry.
+  sharedWeightsPaths:
+    - /usr/share/llm/qwen3-asr-0.6b/shared_weights_fms/shared_weights_diff_0.bin
+
+  # Prefetch model files into the page cache during init to eliminate cold-start page faults.
+  # Currently applies only to the token embedding LUT.
+  usePrefetch: true
