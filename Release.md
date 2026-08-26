@@ -39,6 +39,22 @@ Two deviations from the vendor RPMs, both intentional:
    single undefined symbol, and neither exists on rity, so the alternative was
    shipping stubs. Redo this with `patchelf --remove-needed` if either binary is
    refreshed.
+3. `libatrace.so` is **not** a vendor binary. `libmvpu_engine.so` is an Android
+   build and keeps a `DT_NEEDED` on it, calling `atrace_init`/`atrace_begin`/
+   `atrace_end` from its session paths. The calls sit behind an MVPU config bit
+   that is off by default, but the library is linked `BIND_NOW`, so the loader
+   resolves every relocation up front and `patchelf --remove-needed` turns into
+   a load failure rather than a no-op -- which is why this one needs a real
+   library where libglog and libion did not. `src/atrace.c` implements the three
+   entry points on the ftrace `trace_marker`, so the events still land in a
+   `trace-cmd`/`perfetto` capture. Built with the rity aarch64 toolchain:
+
+       $CC -O2 -fPIC -shared -g0 -Wl,-s -Wl,-soname,libatrace.so \
+           -o usr/lib64/libatrace.so src/atrace.c
+
+   Drop both the library and `src/` once `libmvpu_engine.so` is published from a
+   non-Android build with the trace calls compiled out; nothing else in the
+   image wants the ATrace ABI.
 
 ## 2025/4/30
 
