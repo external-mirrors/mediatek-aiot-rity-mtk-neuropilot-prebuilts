@@ -1,5 +1,45 @@
 # Release Note
 
+## 2026/8/26
+
+MT8894 (Genio Pro 5100) enablement: APUSYS middleware and MVPU 2.5a userspace.
+
+`mdw/mt8894` is a separate middleware build from `mdw/android15` -- MDLA 5.5 plus
+EDMA, the unit tests, EDPA and CBFC:
+`MDLA_VERISON=5.5 ENABLE_EDMA=1 ENABLE_UT=1 ENABLE_EDPAUT=1 ENABLE_CBFCUT=1`.
+
+`mvpu/25` is MVPU 2.5a, taken from the mt8678 prebuilt RPMs -- MT8894 is mt8678
+silicon, so the aarch64 binaries are used unmodified except where noted below.
+`libmcve.so` is deliberately not published: it is the only library that pulls in
+libdmabufheap/libsync/libprop, and nothing in the MVPU or MDLA stack links it.
+
+|            Binary            |                  Commit                  |         Repo/Branch         |  What's Changed  |
+| :--------------------------: | :--------------------------------------: | :-------------------------: | :--------------: |
+| mdw/mt8894/*                 | f69f5c260b93c5e4f1120b34914dc86b04329300 | yocto/src/multimedia/apusys<br>spm-mp-scarthgap.mp1 | new |
+| mvpu/25 libmvpu_runtime.so   | ade6526006ae4886ac233eafd04c81743cd35db1 | mvpu_runtime<br>spm-mp-scarthgap.mp1-1 | v |
+| mvpu/25 libmvpu_pattern*.so  | 1e9d8737b149925c899e2c9225d45520c93acfb0 | mvpu-si/mt8678/mvpu_runtime<br>spm-mp-scarthgap.mp1 | new |
+| mvpu/25 rt_*, mvpu_tester    | 1e9d8737b149925c899e2c9225d45520c93acfb0 | mvpu-si/mt8678/mvpu_runtime<br>spm-mp-scarthgap.mp1 | new |
+| mvpu/25 libmvpu_engine*.so   | 60c4cd44cb05544acb9012cb3fe9393ab5f4d8d1 | mvpu-si/mt8678/mvpu<br>spm-mp-scarthgap.mp1 | v |
+| mvpu/25 libmvpu_config*.so   | 60c4cd44cb05544acb9012cb3fe9393ab5f4d8d1 | mvpu-si/mt8678/mvpu<br>spm-mp-scarthgap.mp1 | new |
+| mvpu/25 libmvpuop25_*.so     | c2f05a4707e229b628ebc009a9fbad291f3400de | mvpu-si/mt8678/mvpu-algo<br>spm-mp-scarthgap.mp1 | new |
+| mvpu/25 libmvpu_clc_*.so     | d3242d26cb38c0aa934a2ca1d5e8698b71d0f132 | mvpu-si/mt8678/cl-toolchain<br>spm-mp-scarthgap.mp1 | new |
+
+Two deviations from the vendor RPMs, both intentional:
+
+1. `libmvpu_runtime.so` is **not** the RPM binary. The RPM's copy has a
+   lost-wakeup race in the 2.5 runtime: `rt_simplecl` hangs in `clFinish()` or
+   returns -501 in roughly 1 run in 9 (measured 21 failures in 200). This one is
+   built from mvpu_runtime `ade6526` plus a fix for that race and the double
+   dispatch behind it, and measured 0 failures in 200. Replace it with the vendor
+   binary once an RPM carries the fix; the fix is also posted to the ALPS
+   mvpu_runtime repo. Note it is built with clang 20.1.1 where the vendor uses
+   18.1.2.
+2. `libmvpu_runtime.so` and `libmvpu_engine.so` have had `libglog.so.1` and
+   `libion.so` removed from their `DT_NEEDED`. Neither library contributes a
+   single undefined symbol, and neither exists on rity, so the alternative was
+   shipping stubs. Redo this with `patchelf --remove-needed` if either binary is
+   refreshed.
+
 ## 2025/4/30
 
 Binaries source:
