@@ -1,0 +1,60 @@
+# Build provenance for the binaries in this directory. Records only what
+# cannot be recovered from the artifacts themselves.
+#
+# repo_commit is ground truth: the commit of THIS repo that last changed those
+# files. upstream_commit is transcribed from Release.md and is NOT verified
+# against the upstream repo. See ../../VERSIONING.md for the convention.
+
+component: neuron
+target: np6
+soc: MT8188 / MT8195
+
+upstream:
+  repo: aiot_int/bsp/neuron-pilot-dev
+  branch: NP6_0
+
+groups:
+  # NOTE: what ships here spans four separate drops. The Release.md tables list
+  # every binary under each drop's SHA even when the file did not change in
+  # that drop, so a table row is not evidence that the binary was built from
+  # that commit. repo_commit below is what actually changed each file.
+
+  - files: [usr/lib64/libneuronusdk_runtime.mtk.so.6.3.3,
+            usr/lib64/libneuronusdk_adapter.mtk.so.6.3.3]
+    repo_commit: 5aa46ad
+    upstream_commit: 553bb891aa37017dbbef35ab676304845fa459e8
+    claimed_in: Release.md 2024/12/23
+    verified: no
+
+  - files: [usr/sbin/ncc-tflite, usr/sbin/neuronrt]
+    repo_commit: 1615e4e
+    upstream_commit: 553bb891aa37017dbbef35ab676304845fa459e8
+    claimed_in: Release.md 2025/4/30
+    verified: no
+    # NOTE: the 2024/12/23 table gives 633cf504... for these two and the
+    # 2025/4/30 table gives 553bb891..., i.e. the tools moved backwards to a
+    # commit the libraries already shipped from. One of the two entries is
+    # wrong and there is nothing in-repo to say which.
+
+  - files: [usr/lib64/libneuron_platform.vpu.so, usr/sbin/runtime_api_sample]
+    repo_commit: d53a85e
+    upstream_commit: 633cf50420c26df6ef09e2cc5514efe386bd82c9
+    claimed_in: Release.md 2024/11/19
+    verified: no
+    # NOTE: d53a85e (2024-11-06) has no Release.md entry of its own; 2024/11/19
+    # is the next one. Later tables restamped these rows with newer SHAs even
+    # though neither file has changed since.
+
+  - files: [usr/include/neuron/api/*.h]
+    repo_commit: 620aed6   # RuntimeV2*.h, Types*.h; older headers at 687d27e, e8af437
+    upstream_commit: unknown
+    verified: no
+    # NOTE: the header set was last touched 2024-05-20 and no entry records a
+    # SHA for it.
+
+api:
+  headers: usr/include/neuron/api
+  runtime_soname: libneuronusdk_runtime.mtk.so.6
+  adapter_soname: libneuronusdk_adapter.mtk.so.6
+
+toolchain: unrecorded

@@ -1,5 +1,93 @@
 # Release Note
 
+Releases from `scarthgap-v1.0.0` onward are versioned and tagged. See
+[VERSIONING.md](VERSIONING.md) for the increment rules and the tag format; the
+dated entries below predate tagging.
+
+Per-binary provenance lives in the per-component `MANIFEST.yaml` files, not in
+the tables here. For any release,
+`git diff <prev-tag>..<tag> -- '*/MANIFEST.yaml'` is the authoritative answer
+to "what was this built from".
+
+## [scarthgap-v1.0.0] - 2026-09-09
+
+Bump: MAJOR - yearly baseline. First tagged release. No binary changes: this
+adds the version contract in VERSIONING.md and back-fills a `MANIFEST.yaml`
+for every component from the entries below and from the commit history.
+
+Back-filling the manifests turned up two things worth stating plainly.
+
+**No upstream SHA in this repo has been verified against its upstream repo.**
+Every value in the manifests is transcribed from a Release.md table or a commit
+message, so each one carries `verified: no` and a `claimed_in:` citation.
+Alongside it, `repo_commit` records the commit of *this* repo that last changed
+those files, which is checkable and is what the manifests key on.
+
+**The tables in the entries below were carried forward by copy-paste**, so a
+row is not evidence that the binary was built from the SHA next to it:
+
+* `neuron/6` ships binaries from four separate drops - the runtime and adapter
+  libraries from `5aa46ad`, `ncc-tflite` and `neuronrt` from `1615e4e`,
+  `libneuron_platform.vpu.so` and `runtime_api_sample` from `d53a85e`, the
+  headers from `620aed6` - yet each entry lists all of them under that drop's
+  SHA. The 2024/11/19 and 2024/12/23 tables also list `libneuronusdk_*.6.3.3`
+  under two different SHAs while the files did not change between them, and
+  the tools appear at `633cf504` in 2024/12/23 and at the older `553bb891` in
+  2025/4/30.
+* `mdw/android13` has not changed since `d53a85e` (2024-11-06), but its rows
+  reappear in all three later entries.
+
+Provenance gaps, recorded as `commit: unknown` rather than guessed:
+
+* `neuron/8` - **no commit in its history records an upstream SHA, and it has
+  never had a Release.md entry.** Everything currently shipped there comes from
+  `36bd7f8`; `81faafd` was superseded by it. `3b031cab1f` is not neuron/8's
+  provenance - that SHA is recorded in `7574b42`, which touched `mdw/android15`
+  and no file under `neuron/8`.
+* `mdw/android13` - no table has ever listed the five test tools in
+  `usr/sbin`; every entry covers the libraries only.
+* `llmsdk/8` - yaml-cpp, sentencepiece, re2 and hf-tokenizers arrived with the
+  vendor drop with no source recorded.
+* `llmsdk/8` `built_against.neuron_api` is derived, not recorded: nothing
+  states which Neuron header revision the runners were compiled against, so it
+  is set to where `neuron/8/usr/include` stood when they were built. Until a
+  drop records it, `make check-abi` detects drift from that baseline rather
+  than confirming the baseline.
+
+Also found while inventorying: `llmsdk/8/usr/lib64/libhf-tokenizer.so`
+(1.2 MB, singular) is referenced by nothing - it is absent from every runner's
+`DT_NEEDED` and no runner contains its name as a dlopen string. The nine
+runners link the 66 KB `libhf-tokenizers.so` instead. Left in place pending a
+decision.
+
+The changes between the 2025/4/30 and 2026/8/26 entries went unrecorded here.
+Summary, with provenance now in the manifests and in `1615e4e..1acf5b7`:
+
+* neuron/8 - NP8 support added
+  - `libneuronusdk_runtime.mtk.so.8.2.16`,
+    `libneuronusdk_adapter.mtk.so.8.2.16`, `neuronrt`, `runtime_api_sample`
+  - DLB (Dynamic Load Balancing) support enabled
+  - rebuilt with clang 18 after clang 20 core-dumped under the Neuron Stable
+    Delegate
+  - warning logs suppressed when NEON or GPU is disabled
+  - `dlopen` library names corrected in the example applications
+
+* llmsdk/8 - LLM/VLM/ASR runners added, NP8 only
+  - `llm_cmdline_tool`, `asr_cmdline_tool`, `run_moonshine_asr.sh`
+  - `mllm_llava`, `mllm_llava_medusa`, `mllm_llava_spec_dec`, `mllm_omni`
+  - `main_whisper`, `main_qwen3_asr`, `moonshine_asr`
+  - all seven binaries built from `nda/gai-cmdline-tool` NP8_0 (`00e2704`),
+    stripped, reporting time-to-first-token in the `[Latency]` block
+  - whisper output-buffer corruption fixed; three consecutive runs now give
+    identical tokens and a correct transcript
+
+* sample - NP8 example and benchmark files added, benchmark flow redesigned
+  for NP8 platforms
+
+* Makefile - install paths made specific to the NP version
+
+MT8894 enablement (`mdw/mt8894`, `mvpu/25`) is in the 2026/8/26 entry below.
+
 ## 2026/8/26
 
 MT8894 (Genio Pro 5100) enablement: APUSYS middleware and MVPU 2.5a userspace.

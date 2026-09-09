@@ -1,0 +1,45 @@
+# Build provenance for the binaries in this directory. Records only what
+# cannot be recovered from the artifacts themselves.
+#
+# repo_commit is ground truth: the commit of THIS repo that last changed those
+# files. upstream_commit is transcribed from Release.md and is NOT verified
+# against the upstream repo. See ../../VERSIONING.md for the convention.
+
+component: mdw
+target: android13
+pairs_with: neuron/6
+
+# Every file here was last changed by d53a85e (2024-11-06) and nothing has
+# touched this directory since.
+repo_commit: d53a85e
+
+groups:
+  # The middleware set comes from three different branches. The same three
+  # SHAs appear unchanged in the 2024/11/19, 2024/12/23 and 2025/4/30 tables,
+  # which is consistent with the directory not having changed.
+  - files: [libapu_mdw.so.2.0.0, libapu_mdw_batch.so.2.0.0, libapusys_edma.so.3.0.0]
+    upstream_commit: b2e99f004964a5b44e215a98549bdc69938b9375
+    branch: aiv-mp-kirkstone.mp1
+    claimed_in: Release.md 2024/11/19
+    verified: no
+
+  - files: [libmdla_ut.so.2.0.0, libmdla_ut.so.3.0.0]
+    upstream_commit: 78a707e2cda54500af8db2b2f1b479be9fc7ca6e
+    branch: alps-mp-t0.mp1
+    claimed_in: Release.md 2024/11/19
+    verified: no
+
+  - files: [libvpu5.so.5.0.0]
+    upstream_commit: 4ad18f265d97cf44ed3badc491cdceb891da9cbf
+    branch: alps-mp-t0.mp5
+    claimed_in: Release.md 2024/11/19
+    verified: no
+
+  - files: [apu_mdw_test, edma_test, mdla2_player, mdla3_player, vpu5_test]
+    upstream_commit: unknown
+    verified: no
+    # NOTE: no Release.md table has ever listed the sbin tools - every entry
+    # covers the libraries only. Presumed to come from the same builds as the
+    # libraries they exercise, but nothing records it.
+
+toolchain: unrecorded

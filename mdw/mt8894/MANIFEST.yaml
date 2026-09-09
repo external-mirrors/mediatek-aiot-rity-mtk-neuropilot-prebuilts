@@ -1,0 +1,43 @@
+# Build provenance for the binaries in this directory. Records only what
+# cannot be recovered from the artifacts themselves. See ../../VERSIONING.md.
+
+component: mdw
+target: mt8894
+pairs_with: neuron/8, mvpu/25
+soc: MT8894 (Genio Pro 5100)
+
+# Every file here was last changed by df9782d (2026-08-26).
+repo_commit: df9782d
+
+source:
+  repo: yocto/src/multimedia/apusys
+  branch: spm-mp-scarthgap.mp1
+  commit: f69f5c260b93c5e4f1120b34914dc86b04329300
+  claimed_in: Release.md 2026/8/26
+  verified: no
+
+build_config:
+  # This is why mt8894 is a separate directory rather than reusing android15:
+  # none of these are enabled in that build.
+  MDLA_VERISON: "5.5"
+  ENABLE_EDMA: 1
+  ENABLE_UT: 1
+  ENABLE_EDPAUT: 1
+  ENABLE_CBFCUT: 1
+
+toolchain: unrecorded
+
+provides:
+  libraries:
+    - libapu_mdw.so
+    - libapu_mdw_batch.so
+    - libapusys_edma.so
+    - libmdla_ut.so
+    - libapu_maaf_nbg.so
+  tools:
+    - apu_mdw_test
+    - edma_test
+    - mdla5.5_player
+    - apu_maaf_nbg_test
+    - cbfc_test64
+    - edpa_test64

@@ -1,0 +1,53 @@
+# Build provenance for the binaries in this directory. Records only what
+# cannot be recovered from the artifacts themselves.
+#
+# repo_commit is ground truth: the commit of THIS repo that last changed those
+# files. upstream_commit is transcribed from Release.md and is NOT verified
+# against the upstream repo. See ../../VERSIONING.md for the convention.
+
+component: neuron
+target: np8
+soc: MT8390 / MT8395 / MT8391 / MT8366 / MT8894
+
+upstream:
+  repo: aiot_int/bsp/neuron-pilot-dev
+  branch: NP8_0
+
+groups:
+  - files: [usr/lib64/libneuronusdk_runtime.mtk.so.8.2.16,
+            usr/lib64/libneuronusdk_adapter.mtk.so.8.2.16,
+            usr/sbin/neuronrt, usr/sbin/runtime_api_sample]
+    repo_commit: 36bd7f8
+    upstream_commit: unknown
+    verified: no
+
+  - files: [usr/include/neuron/api/*.h]
+    repo_commit: 4dfe322
+    upstream_commit: unknown
+    verified: no
+
+# NOTE: no commit in neuron/8's entire history records an upstream SHA, and
+# neuron/8 has never had a Release.md entry. Every drop since 3ec389c
+# (2025-08-25) landed without provenance, so there is nothing to transcribe -
+# this is a real gap, not a transcription failure.
+#
+# Do not reuse 3b031cab1f here. That SHA is recorded in 7574b42, which touched
+# mdw/android15 only and no file under neuron/8; it is that component's
+# provenance. See ../../mdw/android15/MANIFEST.yaml.
+#
+# Fill both groups in at the next drop.
+
+toolchain: clang 18
+# NOTE: minor version unrecorded. 36bd7f8 says only "clang 18" - it downgraded
+# from clang 20, which core-dumps under the Neuron Stable Delegate. Do not
+# uplift the compiler without re-running that path.
+
+api:
+  headers: usr/include/neuron/api
+  # Consumers that dlopen the runtime compile against these. This is the ABI
+  # that llmsdk/8/MANIFEST.yaml's built_against.neuron_api points at, and what
+  # `make check-abi` watches.
+  runtime_soname: libneuronusdk_runtime.mtk.so.8
+  adapter_soname: libneuronusdk_adapter.mtk.so.8
+
+# NOTE: no ncc-tflite here - NP8 model compilation is not done on target.

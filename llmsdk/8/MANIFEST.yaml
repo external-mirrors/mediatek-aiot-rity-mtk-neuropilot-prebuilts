@@ -1,0 +1,73 @@
+# Build provenance for the binaries in this directory. Records only what
+# cannot be recovered from the artifacts themselves.
+#
+# repo_commit is ground truth: the commit of THIS repo that last changed those
+# files. upstream_commit is transcribed from a commit message and is NOT
+# verified against the upstream repo. See ../../VERSIONING.md.
+
+component: llmsdk
+target: np8
+platforms: G520 / G720 / G360 / G360P / G420
+
+groups:
+  - files: [usr/sbin/llm_cmdline_tool, usr/sbin/mllm_llava,
+            usr/sbin/mllm_llava_medusa, usr/sbin/mllm_llava_spec_dec,
+            usr/sbin/mllm_omni, usr/sbin/main_whisper, usr/sbin/main_qwen3_asr]
+    repo_commit: 1acf5b7
+    upstream:
+      repo: nda/gai-cmdline-tool
+      branch: NP8_0
+      commit: 00e2704
+    claimed_in: 1acf5b7 commit message
+    verified: no
+    stripped: yes          # verified: `file` reports stripped
+
+  - files: [usr/sbin/moonshine_asr, usr/sbin/asr_cmdline_tool,
+            usr/sbin/run_moonshine_asr.sh,
+            usr/share/llm-cmdline-tool/*.yaml,
+            usr/share/asr-cmdline-tool/models/*.conf]
+    repo_commit: 8ed26c2
+    upstream_commit: unknown
+    verified: no
+    # NOTE: moonshine_asr is a separate build - it links neither yaml-cpp,
+    # sentencepiece nor the tokenizers, only libstdc++. asr_cmdline_tool and
+    # run_moonshine_asr.sh are POSIX shell.
+
+  - files: [usr/lib64/libyaml-cpp.so.0.8, usr/lib64/libsentencepiece.so.0,
+            usr/lib64/libre2.so.10, usr/lib64/libhf-tokenizers.so,
+            usr/lib64/libhf-tokenizer.so]
+    repo_commit: 7bdae4f
+    upstream_commit: unknown
+    verified: no
+    # NOTE: third party, arrived with the vendor drop with no source recorded.
+
+built_against:
+  # The runners do NOT link Neuron: readelf -d shows no libneuronusdk_* in
+  # DT_NEEDED. They dlopen "libneuronusdk_runtime.mtk.so" - the unversioned
+  # symlink - so the loader enforces nothing and the coupling is invisible to
+  # every tool. This field is the only record of it.
+  #
+  # Value is the commit of THIS repo that last changed neuron/8/usr/include.
+  # `make check-abi` compares it against the current one.
+  neuron_api: 4dfe322
+  neuron_runtime_soname: libneuronusdk_runtime.mtk.so.8
+  neuron_adapter_soname: libneuronusdk_adapter.mtk.so.8
+  verified: no
+  # NOTE: DERIVED, not recorded. 4dfe322 is where neuron/8/usr/include stood
+  # when the runners were built (1acf5b7, 2026-08-21), so it is the best
+  # available value - but no commit message or release note states which
+  # header revision the vendor actually compiled against, and they may have
+  # used an NP8 SDK snapshot that differs from what this repo ships. Replace
+  # this with a recorded value at the next llmsdk drop; until then check-abi
+  # detects drift from this baseline, not correctness of the baseline.
+
+toolchain: unrecorded
+# NOTE: 1acf5b7 records that the binaries are stripped and built from the
+# published source, but names no compiler or SDK.
+
+unused:
+  # NOTE: 1.2 MB, singular name, referenced by nothing - absent from every
+  # runner's DT_NEEDED and not present as a dlopen string in any of them. The
+  # runners use the 66 KB libhf-tokenizers.so. Drop it once someone confirms
+  # no out-of-tree consumer loads it by path.
+  - libhf-tokenizer.so

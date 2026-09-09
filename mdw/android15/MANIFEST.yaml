@@ -1,0 +1,37 @@
+# Build provenance for the binaries in this directory. Records only what
+# cannot be recovered from the artifacts themselves. See ../../VERSIONING.md.
+
+component: mdw
+target: android15
+pairs_with: neuron/8
+soc: MT8390 / MT8395 / MT8391 / MT8366
+
+# Every file here was last changed by 7574b42 (2026-06-01).
+repo_commit: 7574b42
+
+source:
+  repo: aiot_int/bsp/neuron-pilot-dev
+  branch: NP8_0
+  commit: 3b031cab1f
+  claimed_in: 7574b42 commit message
+  verified: no
+  # That commit's stated change: info-level debug logging disabled.
+  # NOTE: this is the only NP8_0 SHA recorded anywhere in the repo. It applies
+  # to this directory only - 7574b42 touched no file under neuron/8.
+
+toolchain: unrecorded
+
+provides:
+  libraries:
+    # Unversioned - no soname, linked and loaded by filename.
+    - libapu_mdw.so
+    - libapu_mdw_batch.so
+    - libapusys_edma.so
+    - libmdla_ut.so
+  tools:
+    - apu_mdw_test
+    - edma_test
+    - mdla5.5_player
+
+# NOTE: MT8894 does not use this build - it needs EDPA, CBFC and the unit
+# tests, which are not enabled here. See ../mt8894/MANIFEST.yaml.

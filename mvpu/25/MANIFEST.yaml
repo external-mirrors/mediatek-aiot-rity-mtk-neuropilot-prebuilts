@@ -1,0 +1,79 @@
+# Build provenance for the binaries in this directory. Records only what
+# cannot be recovered from the artifacts themselves. See ../../VERSIONING.md.
+
+component: mvpu
+target: "25"          # MVPU 2.5a
+pairs_with: mdw/mt8894
+soc: MT8894 (Genio Pro 5100)
+
+# df9782d (2026-08-26) for everything except libatrace.so and src/atrace.c,
+# which are cebcdf5.
+repo_commit: df9782d
+
+source:
+  # Taken from the mt8678 prebuilt RPMs - MT8894 is mt8678 silicon, so the
+  # aarch64 binaries are used unmodified except for the deviations below.
+  claimed_in: Release.md 2026/8/26
+  verified: no
+  groups:
+    - binaries: [libmvpu_runtime.so]
+      repo: mvpu_runtime
+      branch: spm-mp-scarthgap.mp1-1
+      commit: ade6526006ae4886ac233eafd04c81743cd35db1
+      deviation: lost-wakeup-fix
+    - binaries: [libmvpu_pattern_25.so, libmvpu_pattern_pub.so, "rt_*", mvpu_tester, ptn_decoder_test]
+      repo: mvpu-si/mt8678/mvpu_runtime
+      branch: spm-mp-scarthgap.mp1
+      commit: 1e9d8737b149925c899e2c9225d45520c93acfb0
+    - binaries: [libmvpu_engine.so, libmvpu_config.so, libmvpu_config_data.so]
+      repo: mvpu-si/mt8678/mvpu
+      branch: spm-mp-scarthgap.mp1
+      commit: 60c4cd44cb05544acb9012cb3fe9393ab5f4d8d1
+    - binaries: [libmvpuop25_mtk_cv.so, libmvpuop25_mtk_nn.so]
+      repo: mvpu-si/mt8678/mvpu-algo
+      branch: spm-mp-scarthgap.mp1
+      commit: c2f05a4707e229b628ebc009a9fbad291f3400de
+    - binaries: ["libmvpu_clc_*.so.2.1.0"]
+      repo: mvpu-si/mt8678/cl-toolchain
+      branch: spm-mp-scarthgap.mp1
+      commit: d3242d26cb38c0aa934a2ca1d5e8698b71d0f132
+
+deviations:
+  # All three are deliberate and all three must be redone if the binary they
+  # apply to is refreshed. Full rationale in Release.md 2026/8/26.
+  lost-wakeup-fix:
+    binary: libmvpu_runtime.so
+    what: >-
+      Not the RPM binary. Built from mvpu_runtime ade6526 plus a fix for a
+      lost-wakeup race and the double dispatch behind it. The RPM copy hangs
+      in clFinish() or returns -501 in ~1 run in 9 (21 failures in 200); this
+      one measured 0 in 200.
+    toolchain: clang 20.1.1
+    # NOTE: vendor uses 18.1.2. Revert to the RPM binary once one carries the
+    # fix; it is also posted to the ALPS mvpu_runtime repo.
+  removed-dt-needed:
+    binaries: [libmvpu_runtime.so, libmvpu_engine.so]
+    what: >-
+      libglog.so.1 and libion.so removed from DT_NEEDED. Neither contributes
+      an undefined symbol and neither exists on rity.
+    redo_with: patchelf --remove-needed
+  atrace-shim:
+    binary: libatrace.so
+    what: >-
+      Not a vendor binary. libmvpu_engine.so is an Android build that keeps a
+      DT_NEEDED on libatrace.so and calls atrace_init/atrace_begin/atrace_end.
+      It is linked BIND_NOW, so patchelf --remove-needed turns into a load
+      failure rather than a no-op. src/atrace.c implements the three entry
+      points on the ftrace trace_marker.
+    built_in_tree: src/atrace.c
+    build: >-
+      $CC -O2 -fPIC -shared -g0 -Wl,-s -Wl,-soname,libatrace.so
+      -o usr/lib64/libatrace.so src/atrace.c
+    # NOTE: drop this and src/ once libmvpu_engine.so is published from a
+    # non-Android build with the trace calls compiled out.
+
+not_published:
+  libmcve.so: >-
+    The only library in the set that links libdmabufheap/libsync/libprop, and
+    nothing in the MVPU or MDLA stack calls into it. Publishing it would drag
+    the Android compat stack into the BSP for no consumer.
