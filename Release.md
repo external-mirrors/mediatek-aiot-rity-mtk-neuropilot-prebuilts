@@ -9,6 +9,39 @@ the tables here. For any release,
 `git diff <prev-tag>..<tag> -- '*/MANIFEST.yaml'` is the authoritative answer
 to "what was this built from".
 
+## [Unreleased]
+
+Bump: MINOR - new content, no existing artifact changed and no interface
+removed. Tag when the release goes out.
+
+`sample/8/mt8894` added: the demo and benchmark DLAs compiled for MT8894
+(Genio Pro 5100). NP8 stopped being one APU configuration when MT8894 landed -
+mt8391/mt8366 are 1 x MDLA 5.3 with a 256 KB L1, MT8894 is 4 x MDLA 5.5 with a
+4 MB TCM plus 2 x MVPU 2.5 and EDPA 2.0 - and a DLA is tiled for the core count
+and L1 size it was compiled against, so the flat `sample/8` set leaves three of
+MT8894's four cores idle. It does still load: MT8894's nhw accepts MDLA
+5.0..5.5. The refusal is asymmetric - a 5.5 DLA on G720 is the direction that
+fails - so do not rely on a load error to catch a mis-targeted DLA here.
+
+This is an **overlay**, not a second copy: the `.tflite`, label and script
+assets under `sample/8/usr/share` are target-independent and stay where they
+are (~100 MB), and consumers lay this directory over them. `Makefile` gains
+`DLA_OVERLAY` for that, matching `NP_DLA_OVERLAY` in `neuropilot-bin.bb`.
+
+Compiled in-house with `ncc-tflite --arch=mdla5.5,mvpu2.5 --l1-size-kb=4096
+--num-mdla=4` (host 8.2.19), not taken from a vendor drop. Explicit flags rather
+than `--platform-config mt6991`: MT8894 is mt6991-derived but its TCM is 4 MB
+and its DMA engine is EDPA 2.0, and no SDK on hand has an mt8894 platform
+config. EDPA is left out because NP8 has no `edpa2.0` target at all. See
+`sample/8/mt8894/MANIFEST.yaml` for the detail, including why host 8.2.19
+against an 8.2.16 runtime is safe.
+
+Needs the nhw on `mtk-apusys-firmware`'s `mt8894` branch to be in the image:
+without it the Neuron runtime cannot enumerate the APU at all, so none of these
+load. Verified together on genio-pro-5100-evk - all five models dump their IO
+table, mobilenet_v1 classifies grace_hopper correctly, and the four benchmark
+models run at 0.78 to 3.23 ms/inference.
+
 ## [scarthgap-v1.0.0] - 2026-09-09
 
 Bump: MAJOR - yearly baseline. First tagged release. No binary changes: this

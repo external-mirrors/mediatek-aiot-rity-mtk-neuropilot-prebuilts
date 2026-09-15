@@ -1,0 +1,68 @@
+# Build provenance for the binaries in this directory. Records only what
+# cannot be recovered from the artifacts themselves. See ../../../VERSIONING.md.
+
+component: sample
+target: np8
+soc: MT8894 (Genio Pro 5100)
+
+# Not a vendor drop: these are compiled in-house from the .tflite next to the
+# DLAs they replace, under ../usr/share/{demo_dla,benchmark_dla}. Those tflites
+# and the label/script assets beside them are target-independent and are NOT
+# duplicated here -- consumers install this directory as an overlay over
+# sample/8/usr/share (Makefile DLA_OVERLAY, neuropilot-bin.bb NP_DLA_OVERLAY).
+source:
+  kind: compiled-in-tree
+  inputs: sample/8/usr/share/{demo_dla,benchmark_dla}/*.tflite
+  verified: yes          # verified: the tflite inputs are in this repo
+
+# Why this directory exists at all: NP8 is no longer one APU configuration.
+# mt8391/mt8366 are 1 x MDLA 5.3 with a 256 KB L1; MT8894 is 4 x MDLA 5.5 with a
+# 4 MB TCM, 2 x MVPU 2.5 and EDPA 2.0. A DLA is tiled for the core count and L1
+# size it was compiled against, so the flat sample/8 set leaves three of
+# MT8894's four cores idle.
+#
+# NOTE: it does still load. MT8894's nhw declares MDLA 5005000 with
+# compatibility min 5000000 max 5005000, so a 5.3-targeted DLA is inside the
+# accepted range. The refusal is asymmetric: a 5.5 DLA on G720, whose nhw caps
+# at 5003000, is the direction that fails. Do not rely on a load error to catch
+# a mis-targeted DLA within neuron8.
+target_config:
+  flags: --arch=mdla5.5,mvpu2.5 --l1-size-kb=4096 --num-mdla=4
+  # NOTE: explicit flags, NOT --platform-config mt6991. MT8894 is mt6991-derived
+  # but differs on two fields the vendor corrected on 2026-09-15: TCM is 4 MB,
+  # not mt6991's 7 MB, and the DMA engine is EDPA 2.0, not 1.2. The compiler's
+  # built-in mt6991 table carries the mt6991 values, so --platform-config would
+  # compile against the wrong L1 budget. There is no mt8894 platform-config in
+  # any SDK on hand (8.2.19 and 10.0.2 both list mt6991 but not mt8894).
+  #
+  # EDPA is absent from --arch on purpose: NP8 has no edpa2.0 target at all --
+  # 8.2.19 offers edpa1.0/edpa1.2, and the 8.2.16 runtime registers only
+  # EDPA_1_0/EDPA_1_2 (proprietary/platforms/devices/edpa/1.0/CreateDevice.cpp).
+  # Naming edpa1.2 would emit code for a different register layout, so the
+  # engine is simply left unused. NP10 has edpa2.0/2.1, but its DLA format
+  # version is 254803 against this runtime's 230703, so it is not an option
+  # until the target runtime moves too. Add ,edpa2.0 when an NP8 SDK carries it.
+  #
+  # The nhw on mtk-apusys-firmware's mt8894 branch must agree: MDLA amount 4,
+  # tcm_size_kb 4096.
+
+compiler:
+  tool: ncc-tflite
+  version: 8.2.19
+  invocation: ncc-tflite --platform-config mt6991 -o <out>.dla <in>.tflite
+  # NOTE: the target runtime this repo ships is 8.2.16. That is fine -- the DLA
+  # compatibility check in the runtime is an exact match on the DLA *format*
+  # version (kDLAVersion), not the SDK version, and both emit 230703.
+  # Re-verify that if either side moves: neuron dla/DLALoaderSaver.cpp.
+
+provides:
+  demo_dla:
+    - mobilenet_v1_1.0_224_quant.dla
+  benchmark_dla:
+    - inception_v3_quant.dla
+    - mobilenet_v2_1.0_224_quant.dla
+    - ResNet50V2_224_1.0_quant.dla
+    - ssd_mobilenet_v1_coco_quantized.dla
+  # All five are fully quantized. With the explicit --arch above, none of them
+  # needs --relax-fp32 -- nor do the FP32 nnstreamer models, which did need it
+  # under --platform-config mt6991.

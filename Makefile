@@ -5,6 +5,11 @@ DATADIR ?= "/usr/share"
 INCLUDEDIR ?= "/usr/include"
 MDW_VER ?= "android13"
 NP_VER ?= "6"
+# Path to a per-SoC .dla set that replaces the one under sample/${NP_VER}, empty
+# for SoCs that use it as-is.  Needed because NP8 is no longer one APU
+# configuration: mt8391/mt8366 are 1 x MDLA 5.3 with a 256 KB L1, MT8894 is
+# 4 x MDLA 5.5 with 7168 KB, and the runtime rejects a .dla built for the other.
+DLA_OVERLAY ?= ""
 PWD ?= ""
 LIBS=/usr/lib64/*
 
@@ -41,6 +46,13 @@ install:
 	install $(PWD)/sample/${NP_VER}/usr/share/demo_dla/* $(DATADIR)/demo_dla
 	install -d $(DATADIR)/benchmark_dla
 	install $(PWD)/sample/${NP_VER}/usr/share/benchmark_dla/* $(DATADIR)/benchmark_dla
+
+	# Replace the .dla with this SoC's own set where it has one.  The tflite,
+	# label and script assets next to them are target-independent.
+	if [ -n "${DLA_OVERLAY}" ]; then \
+		install -m 0644 $(PWD)/${DLA_OVERLAY}/demo_dla/*.dla $(DATADIR)/demo_dla; \
+		install -m 0644 $(PWD)/${DLA_OVERLAY}/benchmark_dla/*.dla $(DATADIR)/benchmark_dla; \
+	fi
 
 # The llmsdk runners dlopen libneuronusdk_runtime.mtk.so by its unversioned
 # name, so nothing in the ELF records which Neuron API they were built against
