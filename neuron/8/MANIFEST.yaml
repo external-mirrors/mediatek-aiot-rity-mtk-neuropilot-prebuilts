@@ -15,8 +15,18 @@ upstream:
 
 groups:
   - files: [usr/lib64/libneuronusdk_runtime.mtk.so.8.2.16,
-            usr/lib64/libneuronusdk_adapter.mtk.so.8.2.16,
-            usr/sbin/neuronrt, usr/sbin/runtime_api_sample]
+            usr/lib64/libneuronusdk_adapter.mtk.so.8.2.16]
+    repo_commit: 2dba507
+    upstream_commit: 2413f27595993520480b7efb8ca97ce579612f55
+    claimed_in: gerrit.mediatek.inc/c/neuropilot_aiv/neuron/+/12680972 (NP8_0, under review, not yet merged)
+    verified: no
+    deviation: gridsample-mvpu
+    # Adds adapter support for ONNX GridSample (-> MVPU GridSampler2d) and
+    # fixes a general MVPU-backend GenKernels-failure/IO-placement bug. See
+    # deviations.gridsample-mvpu below. upstream_commit is the Gerrit patchset
+    # this was built from; re-check once that CL merges (SHA may be rebased).
+
+  - files: [usr/sbin/neuronrt, usr/sbin/runtime_api_sample]
     repo_commit: 36bd7f8
     upstream_commit: unknown
     verified: no
@@ -35,7 +45,29 @@ groups:
 # mdw/android15 only and no file under neuron/8; it is that component's
 # provenance. See ../../mdw/android15/MANIFEST.yaml.
 #
-# Fill both groups in at the next drop.
+# Fill the sbin/header groups in at the next drop.
+
+deviations:
+  gridsample-mvpu:
+    binaries: [usr/lib64/libneuronusdk_runtime.mtk.so.8.2.16, usr/lib64/libneuronusdk_adapter.mtk.so.8.2.16]
+    what: >-
+      Adapter: new MapGridSample2D (argString MTKEXT_GRID_SAMPLE_2D) lowers
+      ONNX GridSample to nir::GridSampler2DLayer, wrapped in NCHW<->NHWC
+      transposes with the ONNX [-1,1]->pixel grid affine done in the adapter
+      (MVPU samples absolute pixel coords and has no alignCorners field).
+      MVPU backend (BuildTileJobPass, LowerNirToCommandInfoPass,
+      NetworkDeepFusionPass): a GenKernels() failure now fails compile
+      instead of silently returning an unwritten output, and fusion I/O
+      tensors whose op sets io_to_l1=false are placed in DRAM instead of L1.
+      Both additive/defensive; no existing op mapping changed, and the
+      backend fix only affects MVPU (MT8894 only in this repo).
+      Pairs with mvpu/25's libmvpuop25_mtk_{cv,nn}.so update (same drop).
+    known_residual: >-
+      fp16 absolute-coord grid sampling loses precision for H/W >= 200
+      (cos 0.997 @ 200px, 0.994 @ 300px). Needs an fp32-grid kernel binary;
+      not fixed here.
+    verified_on: Genio Pro 5100 EVK (MT8894/MVPU2.5), see
+      gp5100_npu/mvpu_info/gridsample-5100-candidate-1004/README.md (v6).
 
 toolchain: clang 18
 # NOTE: minor version unrecorded. 36bd7f8 says only "clang 18" - it downgraded

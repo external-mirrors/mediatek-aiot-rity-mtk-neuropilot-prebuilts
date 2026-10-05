@@ -11,8 +11,35 @@ to "what was this built from".
 
 ## [Unreleased]
 
-Bump: MINOR - new content, no existing artifact changed and no interface
-removed. Tag when the release goes out.
+Bump: MINOR - `neuron/8`'s adapter/runtime and `mvpu/25`'s nn/cv op libs gain
+ONNX GridSample support on MVPU (Genio Pro 5100 / MT8894 only); no existing
+interface removed, existing op mappings unchanged.
+
+`neuron/8/usr/lib64/libneuronusdk_{adapter,runtime}.mtk.so.8.2.16` and
+`mvpu/25/usr/lib64/libmvpuop25_mtk_{cv,nn}.so` rebuilt from
+neuropilot_aiv/neuron (NP8_0 @83f5cfad + the GridSample adapter/MVPU-backend
+fix, Gerrit I26efc13d / change 12680972, under review) and MVPU_v2_SW/mvpu_op
+(MVPU_SDK_Release_SW4.x @95eee2f8b + local GridSampler2d patches, no CL
+posted yet). Adds adapter support for mapping ONNX GridSample to MVPU's
+GridSampler2d op, and fixes a general MVPU-backend bug where a failed
+GenKernels() returned a successful compile/execute with an unwritten output.
+Both additive/defensive: no existing op mapping or SoC besides MT8894 (the
+only one with MVPU) is affected.
+
+Verified on Genio Pro 5100 EVK: GridSample reaches MVPU for the
+fp16/bilinear/zero-padding path (cos 0.994-0.99999 across an 18-shape sweep,
+IGEV-RT end-to-end 47.7 ms cosine 1.00000, no regression on softmax/tanh);
+unsupported combinations (nearest, non-zero border, reflection) now report
+unsupported at compile instead of running with garbage output. Full sweep and
+acceptance commands: `gp5100_npu/mvpu_info/gridsample-5100-candidate-1004/
+README.md` (v6) and `gp5100_npu/mvpu_info/neuron-build-dev-notes.md`.
+
+Known residual, not fixed by this drop: the GridSampler2d kernel binaries
+sample fp16 absolute pixel coordinates, so precision drops for H/W >= 200
+(cos 0.997 @ 200px, 0.994 @ 300px). Needs an fp32-grid kernel binary.
+
+See `neuron/8/MANIFEST.yaml` (`deviations.gridsample-mvpu`) and
+`mvpu/25/MANIFEST.yaml` (`gridsample_op_lib`) for full provenance.
 
 `sample/8/mt8894` added: the demo and benchmark DLAs compiled for MT8894
 (Genio Pro 5100). NP8 stopped being one APU configuration when MT8894 landed -

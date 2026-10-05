@@ -6,8 +6,9 @@ target: "25"          # MVPU 2.5a
 pairs_with: mdw/mt8894
 soc: MT8894 (Genio Pro 5100)
 
-# df9782d (2026-08-26) for everything except libatrace.so and src/atrace.c,
-# which are cebcdf5.
+# df9782d (2026-08-26) for everything except libatrace.so and src/atrace.c
+# (cebcdf5), and libmvpuop25_mtk_cv.so / libmvpuop25_mtk_nn.so (2dba507 --
+# see the gridsample-op-lib group below and deviations.gridsample-op-lib).
 repo_commit: df9782d
 
 source:
@@ -29,14 +30,34 @@ source:
       repo: mvpu-si/mt8678/mvpu
       branch: spm-mp-scarthgap.mp1
       commit: 60c4cd44cb05544acb9012cb3fe9393ab5f4d8d1
-    - binaries: [libmvpuop25_mtk_cv.so, libmvpuop25_mtk_nn.so]
-      repo: mvpu-si/mt8678/mvpu-algo
-      branch: spm-mp-scarthgap.mp1
-      commit: c2f05a4707e229b628ebc009a9fbad291f3400de
     - binaries: ["libmvpu_clc_*.so.2.1.0"]
       repo: mvpu-si/mt8678/cl-toolchain
       branch: spm-mp-scarthgap.mp1
       commit: d3242d26cb38c0aa934a2ca1d5e8698b71d0f132
+
+# libmvpuop25_mtk_cv.so / libmvpuop25_mtk_nn.so are no longer the mt8678 RPM
+# binary above (c2f05a4) -- rebuilt in-house. See deviations.gridsample-op-lib.
+gridsample_op_lib:
+  binaries: [libmvpuop25_mtk_cv.so, libmvpuop25_mtk_nn.so]
+  repo_commit: 2dba507
+  source:
+    repo: MVPU_v2_SW/mvpu_op
+    branch: MVPU_SDK_Release_SW4.x
+    commit: 95eee2f8b
+    verified: no
+    # NOTE: 95eee2f8b plus local, UNCOMMITTED patches (batch-tiling cherry of
+    # Gerrit 11285964, and a large-shape DRAM-tile GridSampler2d fix) -- no
+    # CL posted yet for mvpu_op. Honest gap per VERSIONING.md: update commit
+    # + claimed_in once that CL exists, instead of guessing a SHA.
+    claimed_in: "local build only, no Gerrit CL yet (2026-10-05)"
+  what: >-
+    Full op-table (nn 61 / cv 97, not the reduced yocto table) plus
+    GridSampler2d support: batch-N tiling + precompiled kernels (the
+    11285964 cherry) and a fix for large-shape (>=128 KB/sample) GridSample
+    that fell through both auto-tiling paths. Pairs with neuron/8's adapter
+    update (see neuron/8/MANIFEST.yaml deviations.gridsample-mvpu).
+  verified_on: Genio Pro 5100 EVK (MT8894/MVPU2.5), see
+    gp5100_npu/mvpu_info/gridsample-5100-candidate-1004/README.md (v6).
 
 deviations:
   # All three are deliberate and all three must be redone if the binary they
