@@ -16,15 +16,16 @@ upstream:
 groups:
   - files: [usr/lib64/libneuronusdk_runtime.mtk.so.8.2.16,
             usr/lib64/libneuronusdk_adapter.mtk.so.8.2.16]
-    repo_commit: 2dba507
-    upstream_commit: 2413f27595993520480b7efb8ca97ce579612f55
-    claimed_in: gerrit.mediatek.inc/c/neuropilot_aiv/neuron/+/12680972 (NP8_0, under review, not yet merged)
-    verified: no
+    repo_commit: Change-Id I17cc706c4ed701b26192652da1ce59e52355ef2d
+    # NOTE: SHA is assigned when Gerrit submits; `git log -1 -- <file>` gives it.
+    upstream_commit: 83f5cfad000d6773757fe527e8d6f86b4f4a07e4   # neuropilot_aiv/neuron NP8_0
+    recipe: aiot_int/bsp/neuron-pilot-dev NP8_0 @ fef5adc7d1e486d7e05d8800f73dc665d4e99f01,
+      recipes-ml/libneuron/libneuron_8.0.bb; patches 0004-0006 added in 8fbcf8d99290
+    verified: yes   # built from these exact revisions by bitbake, not transcribed
     deviation: gridsample-mvpu
     # Adds adapter support for ONNX GridSample (-> MVPU GridSampler2d) and
     # fixes a general MVPU-backend GenKernels-failure/IO-placement bug. See
-    # deviations.gridsample-mvpu below. upstream_commit is the Gerrit patchset
-    # this was built from; re-check once that CL merges (SHA may be rebased).
+    # deviations.gridsample-mvpu below.
 
   - files: [usr/sbin/neuronrt, usr/sbin/runtime_api_sample]
     repo_commit: 36bd7f8
@@ -67,12 +68,16 @@ deviations:
       (cos 0.997 @ 200px, 0.994 @ 300px). Needs an fp32-grid kernel binary;
       not fixed here.
     verified_on: Genio Pro 5100 EVK (MT8894/MVPU2.5), see
-      gp5100_npu/mvpu_info/gridsample-5100-candidate-1004/README.md (v6).
+      gp5100_npu/mvpu_info/gridsample-5100-candidate-1004/README.md (v6);
+      SVE-free rebuild is candidate-1005 (README v7), same source.
 
-toolchain: clang 18
-# NOTE: minor version unrecorded. 36bd7f8 says only "clang 18" - it downgraded
-# from clang 20, which core-dumps under the Neuron Stable Delegate. Do not
-# uplift the compiler without re-running that path.
+toolchain: clang 20.1.1   # adapter/runtime (readelf -p .comment); 36bd7f8's drop was clang 18.1.8
+target_isa: -march=armv8-a+crc
+# These two libs ship to every SoC above, and MT8391/G720 (A78+A55) has no SVE.
+# Build them with a v8 machine tune (e.g. MACHINE=genio-720-evk), never in a
+# genio-pro-5100-evk/armv9a tree: -march=armv9-a emits SVE -> SIGILL on G720
+# (d2f5bf8 shipped ~49k/~25k SVE insns). Check before every drop:
+#   llvm-objdump -d <lib> | grep -ic 'st1w\|ptrue\|z[0-9]\+\.[sdbh]'   # must be 0
 
 api:
   headers: usr/include/neuron/api

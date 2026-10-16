@@ -18,9 +18,9 @@ interface removed, existing op mappings unchanged.
 `neuron/8/usr/lib64/libneuronusdk_{adapter,runtime}.mtk.so.8.2.16` and
 `mvpu/25/usr/lib64/libmvpuop25_mtk_{cv,nn}.so` rebuilt from
 neuropilot_aiv/neuron (NP8_0 @83f5cfad + the GridSample adapter/MVPU-backend
-fix, Gerrit I26efc13d / change 12680972, under review) and MVPU_v2_SW/mvpu_op
-(MVPU_SDK_Release_SW4.x @95eee2f8b + local GridSampler2d patches, no CL
-posted yet). Adds adapter support for mapping ONNX GridSample to MVPU's
+patches 0004-0006 in aiot_int/bsp/neuron-pilot-dev's libneuron recipe) and
+MVPU_v2_SW/mvpu_op (MVPU_SDK_Release_SW4.x @95eee2f8b + the GridSampler2d
+patches in neuron-pilot-dev's mvpu-algo recipe). Adds adapter support for mapping ONNX GridSample to MVPU's
 GridSampler2d op, and fixes a general MVPU-backend bug where a failed
 GenKernels() returned a successful compile/execute with an unwritten output.
 Both additive/defensive: no existing op mapping or SoC besides MT8894 (the
@@ -40,6 +40,15 @@ sample fp16 absolute pixel coordinates, so precision drops for H/W >= 200
 
 See `neuron/8/MANIFEST.yaml` (`deviations.gridsample-mvpu`) and
 `mvpu/25/MANIFEST.yaml` (`gridsample_op_lib`) for full provenance.
+
+**Fixed (untagged regression from d2f5bf8):** the first GridSample drop of
+`libneuronusdk_{adapter,runtime}.mtk.so.8.2.16` was built with `-march=armv9-a`
+and carried ~49k / ~25k SVE instructions. `neuron/8` ships to every np8 SoC,
+and Genio 720 (MT8391: Cortex-A78 + A55) has no SVE, so the runtime died with
+SIGILL at init (`mllm_llava` qwen3vl, exit 132). Rebuilt from the same source
+with `-march=armv8-a+crc`: 0 SVE instructions; SONAME, DT_NEEDED and the
+exported symbol set are unchanged from both d2f5bf8 and bfd81e6. No source
+change, so GridSample behaviour on MT8894 is the same as above.
 
 `sample/8/mt8894` added: the demo and benchmark DLAs compiled for MT8894
 (Genio Pro 5100). NP8 stopped being one APU configuration when MT8894 landed -
