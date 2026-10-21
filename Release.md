@@ -41,6 +41,12 @@ sample fp16 absolute pixel coordinates, so precision drops for H/W >= 200
 See `neuron/8/MANIFEST.yaml` (`deviations.gridsample-mvpu`) and
 `mvpu/25/MANIFEST.yaml` (`gridsample_op_lib`) for full provenance.
 
+**Fixed:** on MT8894 every MVPU operation was unsupported at run time, so e.g.
+all 9 GridSample nodes of RT-DETRv4 ran on CPU. The Neuron adapter loads the op
+libraries as `libmvpuop25_mtk_{nn,cv}.mtk.so` only, and `mvpu/25` shipped just
+the plain `.so`. Added the two `.mtk.so` symlinks; `mtk-apusys-mvpu` installs
+them with `cp -a`.
+
 **Fixed:** `llmsdk/8/usr/sbin/llm_cmdline_tool` hit a random `std::bad_alloc`
 (or a global OOM kill that also dropped adb) at model init in about 1 run in 4,
 seen with Qwen3-1.7B on Genio 720. An uninitialized flag sent plain LLMs into

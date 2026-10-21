@@ -39,6 +39,8 @@ source:
 # binary above (c2f05a4) -- rebuilt in-house. See deviations.gridsample-op-lib.
 gridsample_op_lib:
   binaries: [libmvpuop25_mtk_cv.so, libmvpuop25_mtk_nn.so]
+  # libmvpuop25_mtk_{cv,nn}.mtk.so are symlinks to these: the Neuron adapter dlopen()s only
+  # the .mtk.so names. Without them every MVPU op is unsupported at run time.
   repo_commit: 2dba507
   source:
     repo: MVPU_v2_SW/mvpu_op
