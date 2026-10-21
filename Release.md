@@ -41,6 +41,14 @@ sample fp16 absolute pixel coordinates, so precision drops for H/W >= 200
 See `neuron/8/MANIFEST.yaml` (`deviations.gridsample-mvpu`) and
 `mvpu/25/MANIFEST.yaml` (`gridsample_op_lib`) for full provenance.
 
+**Fixed:** `llmsdk/8/usr/sbin/llm_cmdline_tool` hit a random `std::bad_alloc`
+(or a global OOM kill that also dropped adb) at model init in about 1 run in 4,
+seen with Qwen3-1.7B on Genio 720. An uninitialized flag sent plain LLMs into
+the Qwen3-VL mRoPE table builder, which allocated with a negative length.
+All seven LLM/VLM/ASR runners rebuilt from nda/gai-cmdline-tool NP8_0
+@40aa356: 0 failures in 100 runs, output identical, performance unchanged;
+VLM and ASR runners pass regression.
+
 **Fixed (untagged regression from d2f5bf8):** the first GridSample drop of
 `libneuronusdk_{adapter,runtime}.mtk.so.8.2.16` was built with `-march=armv9-a`
 and carried ~49k / ~25k SVE instructions. `neuron/8` ships to every np8 SoC,

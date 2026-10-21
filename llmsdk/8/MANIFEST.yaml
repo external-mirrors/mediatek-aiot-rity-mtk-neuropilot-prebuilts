@@ -13,14 +13,18 @@ groups:
   - files: [usr/sbin/llm_cmdline_tool, usr/sbin/mllm_llava,
             usr/sbin/mllm_llava_medusa, usr/sbin/mllm_llava_spec_dec,
             usr/sbin/mllm_omni, usr/sbin/main_whisper, usr/sbin/main_qwen3_asr]
-    repo_commit: 1acf5b7
+    repo_commit: this commit (see `git log -1 -- llmsdk/8/usr/sbin/llm_cmdline_tool`)
     upstream:
       repo: nda/gai-cmdline-tool
       branch: NP8_0
-      commit: 00e2704
-    claimed_in: 1acf5b7 commit message
-    verified: no
-    stripped: yes          # verified: `file` reports stripped
+      commit: 40aa35613b18bc3f61d23952a94c041faf25bb9a
+    verified: yes          # built by bitbake from exactly this revision, MACHINE=genio-720-evk
+    stripped: yes
+    # All seven from one build. Fixes the random std::bad_alloc / OOM at model init
+    # (uninitialized kHasRopeScaling sent plain LLMs into the mRoPE path); also includes
+    # 0ebf66b (multi-frame VLM) and 72a53c0 (mllm_llava --serve). Board-verified on G720:
+    # Qwen3-1.7B 0/100 failures, greedy output identical, 256.09 / 13.795 tok/s vs
+    # 258.20 / 13.791 before; VLM and ASR runners passed regression.
 
   - files: [usr/sbin/moonshine_asr, usr/sbin/asr_cmdline_tool,
             usr/sbin/run_moonshine_asr.sh,
