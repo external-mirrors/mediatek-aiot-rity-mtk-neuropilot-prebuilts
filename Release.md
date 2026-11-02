@@ -9,11 +9,13 @@ the tables here. For any release,
 `git diff <prev-tag>..<tag> -- '*/MANIFEST.yaml'` is the authoritative answer
 to "what was this built from".
 
-## [Unreleased]
+## [scarthgap-v1.0.2] - 2026-11-02
 
-Bump: MINOR - `neuron/8`'s adapter/runtime and `mvpu/25`'s nn/cv op libs gain
-ONNX GridSample support on MVPU (Genio Pro 5100 / MT8894 only); no existing
-interface removed, existing op mappings unchanged.
+Bump: PATCH (release owner's call) - fixes and same-API rebuilds of
+`neuron/8`, `mvpu/25` and `llmsdk/8`. The additions (GridSample on MVPU for
+MT8894, new opt-in `mllm_llava` CLI flags, the `sample/8/mt8894` DLA set) are
+all backward compatible: no existing interface removed, existing op mappings
+and CLI output unchanged.
 
 `neuron/8/usr/lib64/libneuronusdk_{adapter,runtime}.mtk.so.8.2.16` and
 `mvpu/25/usr/lib64/libmvpuop25_mtk_{cv,nn}.so` rebuilt from
@@ -46,6 +48,20 @@ all 9 GridSample nodes of RT-DETRv4 ran on CPU. The Neuron adapter loads the op
 libraries as `libmvpuop25_mtk_{nn,cv}.mtk.so` only, and `mvpu/25` shipped just
 the plain `.so`. Added the two `.mtk.so` symlinks; `mtk-apusys-mvpu` installs
 them with `cp -a`.
+
+**Added:** `llmsdk/8/usr/sbin/mllm_llava` gains `--serve`: the model loads once and stays resident, requests
+are read from stdin as `<image>[,<image>...]<TAB><prompt>`, and each answer
+ends with `<<<VLM-END>>>` (or `<<<VLM-CANCELLED>>>`) followed by
+`<<<VLM-READY>>>`; `<<<VLM-QUIT>>>` exits. This saves the 10-20 s weight reload
+per question. Also new: `--cancel-file <path>` (decode stops when the file
+exists and returns the partial answer), `-rp` / `-pw` (repetition penalty over
+the last n generated tokens, default off) and `--self-check`. Without these
+flags the output is unchanged.
+
+**Fixed:** with more than one prompt per run, `mllm_llava` (Qwen3-VL M-RoPE)
+fell into a repetition loop from the second prompt on: the M-RoPE position LUT
+was appended to instead of cleared, so every position id was wrong. Same
+commit as `--serve` above.
 
 **Fixed:** `llmsdk/8/usr/sbin/llm_cmdline_tool` hit a random `std::bad_alloc`
 (or a global OOM kill that also dropped adb) at model init in about 1 run in 4,
