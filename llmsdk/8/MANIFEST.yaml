@@ -17,14 +17,16 @@ groups:
     upstream:
       repo: nda/gai-cmdline-tool
       branch: NP8_0
-      commit: 40aa35613b18bc3f61d23952a94c041faf25bb9a
-    verified: yes          # built by bitbake from exactly this revision, MACHINE=genio-720-evk
+      commit: fd39b1fa10ff1f92ebe67ba0124e259d3465d10b
+    verified: yes          # built by bitbake from a tree identical to this revision, MACHINE=genio-720-evk
     stripped: yes
-    # All seven from one build. Fixes the random std::bad_alloc / OOM at model init
-    # (uninitialized kHasRopeScaling sent plain LLMs into the mRoPE path); also includes
-    # 0ebf66b (multi-frame VLM) and 72a53c0 (mllm_llava --serve). Board-verified on G720:
-    # Qwen3-1.7B 0/100 failures, greedy output identical, 256.09 / 13.795 tok/s vs
-    # 258.20 / 13.791 before; VLM and ASR runners passed regression.
+    # All seven from one build (-march=armv8-a+crc, no SVE). Adds Gemma4 E2B and Qwen3.5
+    # (2B / 4B, hybrid linear attention) support (12810062..12810071), flushes the shared
+    # weights once instead of on every inference (cf7ce89) and prints
+    # "Prompt Mode (incl. vision)" in mllm_llava (fd39b1f). Board-verified on G720:
+    # Gemma4 / Qwen3.5 decode 10.7-11.1 / 9.26 / 6.87 / 4.13 tok/s (>= Android);
+    # A/B vs the 40aa356 runners: llama3.2-1b, qwen3-1.7b, qwen3vl-2b, whisper-tiny,
+    # qwen3-asr-0.6b greedy output identical, qwen3-asr gen +8.4%, others unchanged.
 
   - files: [usr/sbin/moonshine_asr, usr/sbin/asr_cmdline_tool,
             usr/sbin/run_moonshine_asr.sh,

@@ -9,6 +9,36 @@ the tables here. For any release,
 `git diff <prev-tag>..<tag> -- '*/MANIFEST.yaml'` is the authoritative answer
 to "what was this built from".
 
+## [Unreleased]
+
+Bump: MINOR (proposed; the release owner decides at tag time) - the llmsdk
+runners gain Gemma4 and Qwen3.5 model support and one additive output line; no
+flag removed, existing output lines unchanged, existing models' output identical.
+
+`llmsdk/8/usr/sbin/` - all seven LLM/VLM/ASR runners rebuilt from
+nda/gai-cmdline-tool NP8_0 @fd39b1f:
+
+**Added:** Gemma4 E2B-it (sliding-window attention, partial RoPE, per-layer
+embeddings, Gemma4 vision encoder) and Qwen3.5 2B / 4B (hybrid GatedDeltaNet
+linear attention, quantized vision-encoder input) in `mllm_llava`. Verified on
+Genio 720 with the vendor's MT8391 DLAs: all four variants describe their test
+images correctly, end on EOS, and match or beat the Android numbers.
+
+**Added:** with an image, `mllm_llava`'s `[Latency]` block prints a second line
+`Prompt Mode (incl. vision)`, the prompt rate with the vision encoder included -
+the definition the vendor's Gemma4 tool uses (Gemma4 E2B: 128 tok/s, Android
+128). `Prompt Mode` itself still excludes the vision encoder, as before.
+
+**Fixed:** on Yocto every inference cleaned the whole shared-weights buffer from
+the CPU cache (`DMA_BUF_IOCTL_SYNC`, cacheable dma-heap), although the weights
+are written once at load. That is 1.17 GB per generated token for Gemma4 E2B and
+~3.8 GB for Qwen3.5-4B 8W16A. They are now flushed once. Genio 720 decode:
+Gemma4 7.45 -> 11.13, Qwen3.5-2B 4.58 -> 9.26, Qwen3.5-4B 4W16A 3.33 -> 6.87,
+8W16A 2.15 -> 4.13 tok/s. Every shared-weights model benefits (qwen3-asr-0.6b
+gen +8.4%); models without shared weights are unchanged. A/B against the
+previous runners: llama3.2-1b, qwen3-1.7b, qwen3vl-2b, whisper-tiny and
+qwen3-asr-0.6b give byte-identical greedy output.
+
 ## [scarthgap-v1.0.2] - 2026-11-02
 
 Bump: PATCH (release owner's call) - fixes and same-API rebuilds of
