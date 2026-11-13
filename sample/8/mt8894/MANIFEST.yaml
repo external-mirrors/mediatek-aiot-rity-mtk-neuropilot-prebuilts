@@ -61,8 +61,13 @@ provides:
   benchmark_dla:
     - inception_v3_quant.dla
     - mobilenet_v2_1.0_224_quant.dla
+    - mobilenet_v2_1.0_224_float.dla
     - ResNet50V2_224_1.0_quant.dla
     - ssd_mobilenet_v1_coco_quantized.dla
-  # All five are fully quantized. With the explicit --arch above, none of them
-  # needs --relax-fp32 -- nor do the FP32 nnstreamer models, which did need it
-  # under --platform-config mt6991.
+  # The quantized five need no --relax-fp32 with the explicit --arch above --
+  # nor do the FP32 nnstreamer models, which did need it under
+  # --platform-config mt6991.
+  # mobilenet_v2_1.0_224_float.dla is the FP32 model, compiled with the flags
+  # above plus --relax-fp32 (runs as FP16 on the MDLA). It is the "float_mdla"
+  # item of benchmark_suite (neuron_sdk/run.sh), which on NP8 runs these
+  # prebuilt DLAs with neuronrt because there is no on-device ncc-tflite.

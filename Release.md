@@ -15,6 +15,14 @@ Bump: MINOR (proposed; the release owner decides at tag time) - the llmsdk
 runners gain Gemma4 and Qwen3.5 model support and one additive output line; no
 flag removed, existing output lines unchanged, existing models' output identical.
 
+`sample/8/` - **Added:** `benchmark_dla/mobilenet_v2_1.0_224_float.{tflite,dla}`
+(the generic NP8 / Genio 720 DLA: `--arch mdla5.3,edma3.6 --relax-fp32`) and
+its MT8894 counterpart in `sample/8/mt8894/benchmark_dla/` (MT8894 flags plus
+`--relax-fp32`), both ncc-tflite 8.2.19. This lets benchmark_suite report the
+`mobilenet_v2_1.0_224_float` MDLA item on NP8, where it can only run prebuilt
+DLAs (no on-device compiler). `benchmark.py --auto/--stress` now also runs this
+model.
+
 `llmsdk/8/usr/sbin/` - all seven LLM/VLM/ASR runners rebuilt from
 nda/gai-cmdline-tool NP8_0 @fd39b1f:
 
